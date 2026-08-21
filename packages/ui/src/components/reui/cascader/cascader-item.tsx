@@ -1,64 +1,69 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
+import { Combobox as ComboboxPrimitive } from "@base-ui/react";
+import { mergeProps } from "@base-ui/react/merge-props";
+import { useRender } from "@base-ui/react/use-render";
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  LoaderCircleIcon,
+  MinusIcon,
+  RotateCwIcon,
+} from "lucide-react";
+
+import type {
+  CascaderLoadState,
+  CascaderNode,
+} from "@qr-manager/ui/components/reui/cascader/cascader-types";
 import {
   useCascaderActions,
   useCascaderRender,
   useCascaderState,
-} from "@qr-manager/ui/components/reui/cascader/cascader-context"
+} from "@qr-manager/ui/components/reui/cascader/cascader-context";
 import {
   getCascaderCount,
   getCascaderMoreParent,
   getCascaderPath,
   isCascaderMoreNode,
-} from "@qr-manager/ui/components/reui/cascader/cascader-lib"
-import type {
-  CascaderLoadState,
-  CascaderNode,
-} from "@qr-manager/ui/components/reui/cascader/cascader-types"
-import { Combobox as ComboboxPrimitive } from "@base-ui/react"
-import { mergeProps } from "@base-ui/react/merge-props"
-import { useRender } from "@base-ui/react/use-render"
-
-import { cn } from "@qr-manager/ui/lib/utils"
-import { Spinner } from "@qr-manager/ui/components/spinner"
-import { LoaderCircleIcon, MinusIcon, CheckIcon, RotateCwIcon, ChevronRightIcon } from "lucide-react"
+} from "@qr-manager/ui/components/reui/cascader/cascader-lib";
+import { Spinner } from "@qr-manager/ui/components/spinner";
+import { cn } from "@qr-manager/ui/lib/utils";
 
 // Base UI extends its synthetic events with a handler-veto escape hatch.
-type VetoableEvent = { preventBaseUIHandler?: () => void }
+type VetoableEvent = { preventBaseUIHandler?: () => void };
 
 /** A row press. The veto hook is optional: an `as="button"` row is outside Base
  *  UI's listbox and gets a plain React event. */
-export type CascaderRowEvent = React.MouseEvent<HTMLElement> & VetoableEvent
+export type CascaderRowEvent = React.MouseEvent<HTMLElement> & VetoableEvent;
 
 // Each style's inline inset, as a variable: a row and its absolutely positioned
 // check have to land on the same number, in LOGICAL properties. These eight
 // numbers MIRROR the shared style sheets; keep them in step with
 // `registry/styles/style-*.css`.
-const ROW_INSET_CLASS =
-  "[--cascader-row-inset:8px]"
+const ROW_INSET_CLASS = "[--cascader-row-inset:8px]";
 
 // Both insets equal, for a row with no check. `!` because a consumer may not
 // import the sheets into `layer(base)`, where the class would win on order.
 const ROW_FLUSH_CLASS =
-  "ps-[var(--cascader-row-inset,8px)]! pe-[var(--cascader-row-inset,8px)]!"
+  "ps-[var(--cascader-row-inset,8px)]! pe-[var(--cascader-row-inset,8px)]!";
 
 // The same start inset plus room for the check. A flat `pr-8` is wrong in five
 // of the eight styles: 4px of slack in nova, 8px short in maia, luma and sera,
 // and no gutter at all in mira, whose check then overlaps its own label.
 const ROW_GUTTER_CLASS =
-  "ps-[var(--cascader-row-inset,8px)]! pe-[calc(var(--cascader-row-inset,8px)*2_+_16px)]!"
+  "ps-[var(--cascader-row-inset,8px)]! pe-[calc(var(--cascader-row-inset,8px)*2_+_16px)]!";
 
 // The check's box, inset to match the row's. A physical `right-2` neither
 // mirrors under RTL nor tracks the style's inset; `right-auto` comes with the
 // logical `end-*`, because width + `left` + `right` is over-constrained.
 const INDICATOR_CLASS =
-  "pointer-events-none absolute flex items-center justify-center size-4 end-[var(--cascader-row-inset,8px)]! rtl:right-auto!"
+  "pointer-events-none absolute flex items-center justify-center size-4 end-[var(--cascader-row-inset,8px)]! rtl:right-auto!";
 
 // The row's type, gap, radius and icon size per style. No horizontal padding:
 // every row pairs this with `ROW_FLUSH_CLASS` or `ROW_GUTTER_CLASS`.
 const ROW_THEME_CLASS =
-  "data-highlighted:bg-accent data-highlighted:text-accent-foreground not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-4 py-2 rounded-none"
+  "data-highlighted:bg-accent data-highlighted:text-accent-foreground not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-4 py-2 rounded-none";
 
 /**
  * The row's gap and type, per style, held apart from the rest of the theme.
@@ -68,17 +73,15 @@ const ROW_THEME_CLASS =
  * it would have to lose to. Not receiving the token beats overriding it with
  * `!`, which a consumer then has to fight in turn.
  */
-const ROW_GAP_CLASS =
-  "gap-2"
+const ROW_GAP_CLASS = "gap-2";
 
-const ROW_TEXT_CLASS =
-  "text-xs"
+const ROW_TEXT_CLASS = "text-xs";
 
-const ROW_SHELL_CLASS = `${ROW_THEME_CLASS} relative flex w-full cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 ${ROW_INSET_CLASS}`
+const ROW_SHELL_CLASS = `${ROW_THEME_CLASS} relative flex w-full cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 ${ROW_INSET_CLASS}`;
 
-const ROW_CLASS = `${ROW_SHELL_CLASS} ${ROW_GAP_CLASS} ${ROW_TEXT_CLASS}`
+const ROW_CLASS = `${ROW_SHELL_CLASS} ${ROW_GAP_CLASS} ${ROW_TEXT_CLASS}`;
 
-const CASCADER_ACTION_INSET_CLASS = `${ROW_INSET_CLASS} ${ROW_FLUSH_CLASS}`
+const CASCADER_ACTION_INSET_CLASS = `${ROW_INSET_CLASS} ${ROW_FLUSH_CLASS}`;
 
 /** A footer COMMAND: the row theme, so it cannot drift from the list, plus the
  *  hover and `focus-visible` fills a plain button never gets. Fills, never a
@@ -87,18 +90,18 @@ const CASCADER_ACTION_INSET_CLASS = `${ROW_INSET_CLASS} ${ROW_FLUSH_CLASS}`
  *  leave a command painted as if it were still hovered. Disabled keys off
  *  `aria-disabled`, not `:disabled`, to keep it FOCUSABLE: a footer whose only
  *  row is disabled has no tab stop. */
-export const CASCADER_ACTION_CLASS = `${ROW_SHELL_CLASS} ${ROW_TEXT_CLASS} ${ROW_FLUSH_CLASS} hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground cursor-pointer gap-2 transition-colors aria-disabled:pointer-events-none aria-disabled:opacity-50`
+export const CASCADER_ACTION_CLASS = `${ROW_SHELL_CLASS} ${ROW_TEXT_CLASS} ${ROW_FLUSH_CLASS} hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground cursor-pointer gap-2 transition-colors aria-disabled:pointer-events-none aria-disabled:opacity-50`;
 
 // The box around the affordances that are not the row. 20px around a 16px icon,
 // the outer 2px cancelled at the call site; 24px would set the row height.
 const AFFORDANCE_BOX_CLASS =
-  "flex size-5 shrink-0 items-center justify-center rounded-sm"
+  "flex size-5 shrink-0 items-center justify-center rounded-sm";
 
 // What makes an affordance read as pressable on an already highlighted row. Not
 // `hover:bg-accent`: the row is `bg-accent` under the pointer, so the chip would
 // be invisible. `!` and `**:` for the `CHECKBOX_MARK_CLASS` reason.
 const AFFORDANCE_HOVER_CLASS =
-  "transition-[background-color,box-shadow,color] hover:bg-background hover:text-foreground! hover:**:text-foreground! hover:shadow-xs"
+  "transition-[background-color,box-shadow,color] hover:bg-background hover:text-foreground! hover:**:text-foreground! hover:shadow-xs";
 
 // The selection MARK's colour, pinned so nothing can repaint it: every row
 // carries a DESCENDANT highlight rule, and a mark is STATE. Pinned TWICE
@@ -106,63 +109,64 @@ const AFFORDANCE_HOVER_CLASS =
 // `<path>` inherits and resolves against the PATH's own `color`. Both halves
 // are asserted in `cascader-behavior.test.tsx`.
 const CHECKBOX_MARK_CLASS =
-  "text-primary-foreground! **:text-primary-foreground!"
-const INDICATOR_MARK_CLASS = "text-foreground! **:text-foreground!"
+  "text-primary-foreground! **:text-primary-foreground!";
+const INDICATOR_MARK_CLASS = "text-foreground! **:text-foreground!";
 
 // Milliseconds the pointer must rest on a branch row before
 // `expandTrigger="hover"` drills in: long enough that a pointer crossing the
 // column on its way elsewhere opens nothing, short enough to read as immediate.
-const CASCADER_HOVER_EXPAND_DELAY = 150
+const CASCADER_HOVER_EXPAND_DELAY = 150;
 
-export interface CascaderItemProps extends Omit<
-  ComboboxPrimitive.Item.Props,
-  "value" | "children" | "className" | "style" | "onClick" | "onMouseUp"
-> {
+export interface CascaderItemProps
+  extends Omit<
+    ComboboxPrimitive.Item.Props,
+    "value" | "children" | "className" | "style" | "onClick" | "onMouseUp"
+  > {
   /** No state callback: the row merges `className` and `style` itself. */
-  className?: string
-  style?: React.CSSProperties
-  onClick?: (event: CascaderRowEvent) => void
-  onMouseUp?: (event: CascaderRowEvent) => void
-  node: CascaderNode
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: (event: CascaderRowEvent) => void;
+  onMouseUp?: (event: CascaderRowEvent) => void;
+  node: CascaderNode;
   /** Explicit render index. Required while virtualized and DELIBERATELY IGNORED
    *  otherwise: it self-registers the row and breaks `aria-activedescendant`. */
-  index?: number
+  index?: number;
   /** Indentation depth. Drives `--cascader-indent` in tree mode. */
-  depth?: number
+  depth?: number;
   /** Renders the ancestor chain under the label, for deep-search results. */
-  showPath?: boolean
+  showPath?: boolean;
   /** `option` renders a real `Combobox.Item`; `button` renders identical markup
    *  outside the listbox, for the ancestor columns in columns mode. */
-  as?: "option" | "button"
+  as?: "option" | "button";
   /** Tree mode: this row is an expanded branch. */
-  expanded?: boolean
+  expanded?: boolean;
   /** Indent each depth by this many pixels. Tree mode only. */
-  indent?: number
+  indent?: number;
   /** Whether the node has children. Defaults to the cascader's own answer, as do
    *  the three below: callers pass them because they already hold the level,
    *  which keeps a memoised row off the volatile context. */
-  branch?: boolean
+  branch?: boolean;
   /** Whether the node may be committed. Defaults to the cascader's own answer. */
-  selectable?: boolean
+  selectable?: boolean;
   /** Whether the node is currently selected. Defaults to the cascader's answer. */
-  selected?: boolean
+  selected?: boolean;
   /** Some but not all of the loaded subtree selected. `cascade` only. */
-  indeterminate?: boolean
+  indeterminate?: boolean;
   /** Selected nodes below this one, at any depth. Drives the trailing count. */
-  selectedCount?: number
+  selectedCount?: number;
   /** Paging row only: a request for this level is in flight. */
-  loading?: boolean
+  loading?: boolean;
   /** Paging row only: this level's last request failed. */
-  error?: boolean
+  error?: boolean;
   /** Branch row only: this node's OWN children are being fetched. The chevron
    *  (or, in tree mode, the expander) becomes a spinner IN PLACE, in the same
    *  16px box: no skeleton row appears below, nothing reflows. */
-  childrenLoading?: boolean
+  childrenLoading?: boolean;
   /** Branch row only: the last fetch of this node's children failed. The same
    *  box becomes the retry. The press path is unchanged: it goes through
    *  `navigate`, which refires the failed level rather than moving. */
-  childrenError?: boolean
-  children?: React.ReactNode
+  childrenError?: boolean;
+  children?: React.ReactNode;
 }
 
 /** One row. Branch presses navigate instead of selecting, vetoed here with
@@ -212,68 +216,68 @@ const CascaderItem = React.memo(function CascaderItem({
     virtualized,
     loadMore,
     retryLevel,
-  } = useCascaderActions()
+  } = useCascaderActions();
   // Render props come from an always-current context, or a closure goes stale.
-  const { renderItem, renderLabel } = useCascaderRender()
+  const { renderItem, renderLabel } = useCascaderRender();
 
-  const branch = branchProp ?? isBranch(node)
-  const selectable = selectableProp ?? isSelectable(node)
-  const selected = selectedProp ?? isSelected(node)
+  const branch = branchProp ?? isBranch(node);
+  const selectable = selectableProp ?? isSelectable(node);
+  const selected = selectedProp ?? isSelected(node);
   // A selected node is never also partially selected (a dash in a filled box).
   const indeterminate =
-    !selected && (indeterminateProp ?? isIndeterminate(node))
-  const count = branch ? getCascaderCount(treeIndex, node) : 0
-  const nodeDepth = depth ?? treeIndex.depthOf.get(node.value) ?? 0
+    !selected && (indeterminateProp ?? isIndeterminate(node));
+  const count = branch ? getCascaderCount(treeIndex, node) : 0;
+  const nodeDepth = depth ?? treeIndex.depthOf.get(node.value) ?? 0;
 
   // O(1): the cascader publishes a map of selected-descendant counts, because a
   // row walking its own subtree is `rows x descendants`, paid every keystroke.
   const selectedDescendants = branch
     ? (selectedCountProp ?? selectedDescendantCount(node))
-    : 0
+    : 0;
   // `multiple` only: with a single selection the trigger, the breadcrumb and
   // the leaf's own check already say where it is, so swapping a branch's real
   // child total ("24") for a permanent "1" would trade a useful number away.
-  const showsSelectedCount = multiple && selectedDescendants > 0
-  const trailingCount = showsSelectedCount ? selectedDescendants : count
+  const showsSelectedCount = multiple && selectedDescendants > 0;
+  const trailingCount = showsSelectedCount ? selectedDescendants : count;
   // Shown selected or not: suppressing it under a checked branch read as data
   // loss, and the row's TWO trailing columns mean the count never has to share
   // a slot with the check.
-  const showCount = trailingCount > 0
+  const showCount = trailingCount > 0;
 
   // Where a multi-select tree puts its checkbox: at the HEAD of the row, since a
   // trailing box does not follow the label stagger. Per-LIST, never per-row, or
   // the labels below an unselectable row step back out.
-  const leadingCheckbox = mode === "tree" && multiple
+  const leadingCheckbox = mode === "tree" && multiple;
 
   // Whether this row draws a MARK, and so whether it reserves the gutter one
   // needs. `|| multiple` is the scope of the opt-out: a checkbox is the
   // selection CONTROL, so `indicator={false}` is a no-op in multi-select.
-  const showsIndicator = indicatorEnabled || multiple
+  const showsIndicator = indicatorEnabled || multiple;
 
   const veto = React.useCallback((event: VetoableEvent) => {
-    event.preventBaseUIHandler?.()
-  }, [])
+    event.preventBaseUIHandler?.();
+  }, []);
 
   const handleClick = React.useCallback(
     (event: CascaderRowEvent) => {
-      onClick?.(event)
-      if (node.disabled) return
+      onClick?.(event);
+      if (node.disabled) return;
       if (branch && !selectable) {
-        veto(event)
-        navigate(node)
+        veto(event);
+        navigate(node);
       }
     },
-    [onClick, node, branch, selectable, veto, navigate]
-  )
+    [onClick, node, branch, selectable, veto, navigate],
+  );
 
   const handleMouseUp = React.useCallback(
     (event: CascaderRowEvent) => {
-      onMouseUp?.(event)
-      if (node.disabled) return
-      if (branch && !selectable) veto(event)
+      onMouseUp?.(event);
+      if (node.disabled) return;
+      if (branch && !selectable) veto(event);
     },
-    [onMouseUp, node, branch, selectable, veto]
-  )
+    [onMouseUp, node, branch, selectable, veto],
+  );
 
   // The tree expander's own press. With `selectable="any"` the row press
   // commits, and under `cascade` that selected a whole subtree while the row
@@ -282,79 +286,79 @@ const CascaderItem = React.memo(function CascaderItem({
   // one in `role="option"` fails axe. `navigate` fetches BEFORE it opens.
   const handleExpanderClick = React.useCallback(
     (event: CascaderRowEvent) => {
-      event.stopPropagation()
-      veto(event)
-      if (node.disabled) return
-      if (expanded) toggleExpanded(node.value)
-      else navigate(node)
+      event.stopPropagation();
+      veto(event);
+      if (node.disabled) return;
+      if (expanded) toggleExpanded(node.value);
+      else navigate(node);
     },
-    [veto, node, expanded, toggleExpanded, navigate]
-  )
+    [veto, node, expanded, toggleExpanded, navigate],
+  );
 
   const handleExpanderMouseUp = React.useCallback(
     (event: CascaderRowEvent) => {
       // Base UI treats a drag-select mouseup as a commit; this is not one.
-      event.stopPropagation()
-      veto(event)
+      event.stopPropagation();
+      veto(event);
     },
-    [veto]
-  )
+    [veto],
+  );
 
   const handleChevronClick = React.useCallback(
     (event: CascaderRowEvent) => {
-      event.stopPropagation()
-      veto(event)
-      if (node.disabled) return
+      event.stopPropagation();
+      veto(event);
+      if (node.disabled) return;
       // `navigate` falls through to `pushLevel`, which APPENDS: right in the
       // deepest column, but from an ancestor column it duplicated the level and
       // corrupted the path. `navigateAt` rebuilds the trail from this depth.
-      if (as === "button") navigateAt(node, depth ?? 0)
-      else navigate(node)
+      if (as === "button") navigateAt(node, depth ?? 0);
+      else navigate(node);
     },
-    [veto, node, as, navigateAt, depth, navigate]
-  )
+    [veto, node, as, navigateAt, depth, navigate],
+  );
 
   const handleChevronMouseUp = React.useCallback(
     (event: CascaderRowEvent) => veto(event),
-    [veto]
-  )
+    [veto],
+  );
 
   // Keeps focus in the search field: Base UI prevents the mousedown default for
   // option rows, and focusing a `tabindex="-1"` trail row kills every key.
   const handleButtonMouseDown = React.useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
-      event.preventDefault()
+      event.preventDefault();
     },
-    []
-  )
+    [],
+  );
 
   const handleButtonClick = React.useCallback(
     (event: CascaderRowEvent) => {
-      onClick?.(event)
-      if (node.disabled) return
+      onClick?.(event);
+      if (node.disabled) return;
       if (branch && !selectable) {
         // Button rows only exist in the columns trail, where `depth` is the
         // column's own depth, so navigating replaces the trail from here.
-        navigateAt(node, depth ?? 0)
-        return
+        navigateAt(node, depth ?? 0);
+        return;
       }
-      if (selectable) commit(node)
+      if (selectable) commit(node);
     },
-    [onClick, node, branch, selectable, navigateAt, depth, commit]
-  )
+    [onClick, node, branch, selectable, navigateAt, depth, commit],
+  );
 
   // The paging row's press, never a selection, whatever `selectable` says.
   const handleMoreClick = React.useCallback(
     (event: CascaderRowEvent) => {
-      onClick?.(event)
-      veto(event)
-      const parent = getCascaderMoreParent(node)
-      if (parent == null) return
-      if (error) retryLevel(parent)
-      else if (!loading) loadMore(parent)
+      onClick?.(event);
+      veto(event);
+      const parent = getCascaderMoreParent(node);
+      if (parent == null) return;
+      if (error) retryLevel(parent);
+      else if (!loading) loadMore(parent);
     },
-    [onClick, veto, node, error, loading, retryLevel, loadMore]
-  )
+    [onClick, veto, node, error, loading, retryLevel, loadMore],
+  );
 
   // `expandTrigger="hover"`: resting on a BRANCH row in the ACTIVE column drills
   // in after a delay. The deepest column of columns mode only, and it never
@@ -364,29 +368,29 @@ const CascaderItem = React.memo(function CascaderItem({
     mode === "columns" &&
     as === "option" &&
     branch &&
-    !node.disabled
-  const hoverTimerRef = React.useRef<number | null>(null)
+    !node.disabled;
+  const hoverTimerRef = React.useRef<number | null>(null);
 
   const cancelHoverNavigate = React.useCallback(() => {
-    if (hoverTimerRef.current == null) return
-    window.clearTimeout(hoverTimerRef.current)
-    hoverTimerRef.current = null
-  }, [])
+    if (hoverTimerRef.current == null) return;
+    window.clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = null;
+  }, []);
 
   const handleHoverPointerEnter = React.useCallback(() => {
-    cancelHoverNavigate()
+    cancelHoverNavigate();
     hoverTimerRef.current = window.setTimeout(() => {
-      hoverTimerRef.current = null
-      navigate(node)
-    }, CASCADER_HOVER_EXPAND_DELAY)
-  }, [cancelHoverNavigate, navigate, node])
+      hoverTimerRef.current = null;
+      navigate(node);
+    }, CASCADER_HOVER_EXPAND_DELAY);
+  }, [cancelHoverNavigate, navigate, node]);
 
   // Drilling in demotes this column to the trail WITHOUT unmounting the row, so
   // a pending timer has to die or it fires `navigate` from an inactive column.
   React.useEffect(() => {
-    if (!hoverNavigates) cancelHoverNavigate()
-  }, [hoverNavigates, cancelHoverNavigate])
-  React.useEffect(() => cancelHoverNavigate, [cancelHoverNavigate])
+    if (!hoverNavigates) cancelHoverNavigate();
+  }, [hoverNavigates, cancelHoverNavigate]);
+  React.useEffect(() => cancelHoverNavigate, [cancelHoverNavigate]);
 
   /* ------------------------------- paging row ------------------------------ */
 
@@ -397,7 +401,7 @@ const CascaderItem = React.memo(function CascaderItem({
         ? node.count
           ? labels.loadingMore
           : labels.loading
-        : labels.loadMore
+        : labels.loadMore;
 
     const moreStyle =
       mode === "tree" && nodeDepth > 0
@@ -405,7 +409,7 @@ const CascaderItem = React.memo(function CascaderItem({
             ...style,
             "--cascader-indent": `${nodeDepth * indent}px`,
           } as React.CSSProperties)
-        : style
+        : style;
 
     const moreShared = {
       "data-slot": "cascader-item",
@@ -420,9 +424,9 @@ const CascaderItem = React.memo(function CascaderItem({
         !error && !loading && "hover:text-foreground",
         mode === "tree" &&
           "ps-[calc(var(--cascader-row-inset,8px)_+_var(--cascader-indent,0px))]!",
-        className
+        className,
       ),
-    }
+    };
 
     const moreBody = children ?? (
       <>
@@ -436,13 +440,13 @@ const CascaderItem = React.memo(function CascaderItem({
           <span className="text-foreground font-medium">{labels.retry}</span>
         ) : null}
       </>
-    )
+    );
 
     if (as === "button") {
-      const buttonProps = { ...(props as React.ComponentProps<"button">) }
-      delete buttonProps["aria-setsize"]
-      delete buttonProps["aria-posinset"]
-      delete buttonProps["aria-level"]
+      const buttonProps = { ...(props as React.ComponentProps<"button">) };
+      delete buttonProps["aria-setsize"];
+      delete buttonProps["aria-posinset"];
+      delete buttonProps["aria-level"];
 
       return (
         <button
@@ -454,7 +458,7 @@ const CascaderItem = React.memo(function CascaderItem({
         >
           {moreBody}
         </button>
-      )
+      );
     }
 
     return (
@@ -471,7 +475,7 @@ const CascaderItem = React.memo(function CascaderItem({
       >
         {moreBody}
       </ComboboxPrimitive.Item>
-    )
+    );
   }
 
   const itemState = {
@@ -481,10 +485,10 @@ const CascaderItem = React.memo(function CascaderItem({
     depth: nodeDepth,
     count,
     path: showPath ? getCascaderPath(treeIndex, node.value).slice(0, -1) : [],
-  }
+  };
 
-  const custom = renderItem?.(node, itemState)
-  const customLabel = renderLabel?.(node, itemState)
+  const custom = renderItem?.(node, itemState);
+  const customLabel = renderLabel?.(node, itemState);
 
   // What the markup cannot say: a branch would announce "Person 24", a naked
   // number. Trail rows are outside the listbox, so they need words for state.
@@ -499,7 +503,7 @@ const CascaderItem = React.memo(function CascaderItem({
   ]
     .filter(Boolean)
     .map((detail) => `, ${detail}`)
-    .join("")
+    .join("");
 
   // Extracted because tree mode renders it INLINE at the head of the row. It
   // reads `data-selected` off the ROW, so it also works on the trail rows.
@@ -510,25 +514,34 @@ const CascaderItem = React.memo(function CascaderItem({
     >
       {/* Colour declared ON THE ICON with `!`; see `CHECKBOX_MARK_CLASS`. */}
       {indeterminate ? (
-        <MinusIcon data-slot="cascader-item-dash" className={cn(CHECKBOX_MARK_CLASS, "size-3")} />
+        <MinusIcon
+          data-slot="cascader-item-dash"
+          className={cn(CHECKBOX_MARK_CLASS, "size-3")}
+        />
       ) : (
-        <CheckIcon data-slot="cascader-item-tick" className={cn(
-                              CHECKBOX_MARK_CLASS,
-                              "size-3 opacity-0 in-data-[selected]:opacity-100"
-                            )} />
+        <CheckIcon
+          data-slot="cascader-item-tick"
+          className={cn(
+            CHECKBOX_MARK_CLASS,
+            "size-3 opacity-0 in-data-[selected]:opacity-100",
+          )}
+        />
       )}
     </span>
-  )
+  );
 
   const indicator = (
     <>
       {multiple ? (
         checkbox
       ) : (
-        <CheckIcon data-slot="cascader-item-check" className={cn("pointer-events-none", INDICATOR_MARK_CLASS)} />
+        <CheckIcon
+          data-slot="cascader-item-check"
+          className={cn("pointer-events-none", INDICATOR_MARK_CLASS)}
+        />
       )}
     </>
-  )
+  );
 
   const body = custom ?? children ?? (
     <>
@@ -548,7 +561,7 @@ const CascaderItem = React.memo(function CascaderItem({
             childrenError ? "text-destructive" : "text-muted-foreground",
             AFFORDANCE_BOX_CLASS,
             AFFORDANCE_HOVER_CLASS,
-            childrenLoading && "pointer-events-none"
+            childrenLoading && "pointer-events-none",
           )}
         >
           {childrenLoading ? (
@@ -556,15 +569,17 @@ const CascaderItem = React.memo(function CascaderItem({
           ) : childrenError ? (
             <RotateCwIcon className="size-4" />
           ) : (
-            <ChevronRightIcon className={cn(
-                                              "size-4 transition-transform",
-                                              /* Collapsed it points INTO the level, so it mirrors; expanded
+            <ChevronRightIcon
+              className={cn(
+                "size-4 transition-transform",
+                /* Collapsed it points INTO the level, so it mirrors; expanded
                                                  it points DOWN, the same in both writing modes, so the mirror
                                                  has to come off or `scaleX(-1)` composed with `rotate(90deg)`
                                                  lands it pointing up. `rtl:rotate-90` beside `rotate-90` was
                                                  a no-op that only looked like it handled this. */
-                                              expanded ? "rotate-90" : "rtl:-scale-x-100"
-                                            )} />
+                expanded ? "rotate-90" : "rtl:-scale-x-100",
+              )}
+            />
           )}
         </span>
       ) : mode === "tree" ? (
@@ -660,7 +675,7 @@ const CascaderItem = React.memo(function CascaderItem({
               AFFORDANCE_BOX_CLASS,
               selectable && AFFORDANCE_HOVER_CLASS,
               childrenError && "text-destructive",
-              childrenLoading && "pointer-events-none"
+              childrenLoading && "pointer-events-none",
             )}
           >
             {childrenLoading ? (
@@ -682,7 +697,7 @@ const CascaderItem = React.memo(function CascaderItem({
           aria-hidden="true"
           className={cn(
             "text-muted-foreground ms-auto shrink-0 text-xs tabular-nums",
-            showsSelectedCount && "text-primary!"
+            showsSelectedCount && "text-primary!",
           )}
         >
           {trailingCount}
@@ -719,7 +734,7 @@ const CascaderItem = React.memo(function CascaderItem({
         )
       ) : null}
     </>
-  )
+  );
 
   const rowStyle =
     mode === "tree" && nodeDepth > 0
@@ -727,7 +742,7 @@ const CascaderItem = React.memo(function CascaderItem({
           ...style,
           "--cascader-indent": `${nodeDepth * indent}px`,
         } as React.CSSProperties)
-      : style
+      : style;
 
   const shared = {
     "data-slot": "cascader-item",
@@ -759,16 +774,16 @@ const CascaderItem = React.memo(function CascaderItem({
          `_+_` because Tailwind's parser splits on whitespace. */
       mode === "tree" &&
         "ps-[calc(var(--cascader-row-inset,8px)_+_var(--cascader-indent,0px))]!",
-      className
+      className,
     ),
-  }
+  };
 
   if (as === "button") {
-    const buttonProps = { ...(props as React.ComponentProps<"button">) }
+    const buttonProps = { ...(props as React.ComponentProps<"button">) };
     // `role="button"` allows none of these, so they are dropped, not passed.
-    delete buttonProps["aria-setsize"]
-    delete buttonProps["aria-posinset"]
-    delete buttonProps["aria-level"]
+    delete buttonProps["aria-setsize"];
+    delete buttonProps["aria-posinset"];
+    delete buttonProps["aria-level"];
 
     return (
       <button
@@ -784,7 +799,7 @@ const CascaderItem = React.memo(function CascaderItem({
       >
         {body}
       </button>
-    )
+    );
   }
 
   return (
@@ -822,14 +837,14 @@ const CascaderItem = React.memo(function CascaderItem({
     >
       {body}
     </ComboboxPrimitive.Item>
-  )
-})
+  );
+});
 
 /** Ancestor chain under a deep-search result: "Name" alone is ambiguous. */
 function CascaderItemPath({ node }: { node: CascaderNode }) {
-  const { index, labels } = useCascaderActions()
-  const ancestors = getCascaderPath(index, node.value).slice(0, -1)
-  if (!ancestors.length) return null
+  const { index, labels } = useCascaderActions();
+  const ancestors = getCascaderPath(index, node.value).slice(0, -1);
+  if (!ancestors.length) return null;
 
   return (
     <span
@@ -845,7 +860,7 @@ function CascaderItemPath({ node }: { node: CascaderNode }) {
         </React.Fragment>
       ))}
     </span>
-  )
+  );
 }
 
 /** Every load-derived prop a row needs. A PAGING row reports the level it
@@ -853,35 +868,35 @@ function CascaderItemPath({ node }: { node: CascaderNode }) {
  *  answers both. Exported because a memoised row cannot read them itself. */
 export function getCascaderMoreProps(
   node: CascaderNode,
-  loadStates: ReadonlyMap<string, CascaderLoadState>
+  loadStates: ReadonlyMap<string, CascaderLoadState>,
 ): {
-  loading: boolean
-  error: boolean
-  childrenLoading: boolean
-  childrenError: boolean
+  loading: boolean;
+  error: boolean;
+  childrenLoading: boolean;
+  childrenError: boolean;
 } {
-  const parent = getCascaderMoreParent(node)
+  const parent = getCascaderMoreParent(node);
   if (parent == null) {
-    const own = loadStates.get(node.value)
+    const own = loadStates.get(node.value);
     return {
       loading: false,
       error: false,
       childrenLoading: !!own?.loading,
       childrenError: !!own?.error,
-    }
+    };
   }
-  const state = loadStates.get(parent)
+  const state = loadStates.get(parent);
   return {
     loading: !!state?.loading,
     error: !!state?.error,
     childrenLoading: false,
     childrenError: false,
-  }
+  };
 }
 
 export interface CascaderItemsProps {
   /** Replaces the default row for every item. */
-  children?: (node: CascaderNode, index: number) => React.ReactNode
+  children?: (node: CascaderNode, index: number) => React.ReactNode;
 }
 
 /** Whatever the active view is: the current level, the deepest column, or the
@@ -890,10 +905,10 @@ export interface CascaderItemsProps {
  *  passed; see `CascaderItemProps`. */
 function CascaderItems({ children }: CascaderItemsProps) {
   const { mode, isBranch, isSelectable, isSelected, isIndeterminate } =
-    useCascaderActions()
+    useCascaderActions();
   const { renderedItems, deepResults, treeRows, loadStates } =
-    useCascaderState()
-  const showPath = deepResults !== null
+    useCascaderState();
+  const showPath = deepResults !== null;
 
   // Answered once here, as plain booleans, so `React.memo` can skip a row.
   if (mode === "tree") {
@@ -918,10 +933,10 @@ function CascaderItems({ children }: CascaderItemsProps) {
               aria-setsize={row.setSize}
               aria-posinset={row.posInSet}
             />
-          )
+          ),
         )}
       </>
-    )
+    );
   }
 
   return (
@@ -942,10 +957,10 @@ function CascaderItems({ children }: CascaderItemsProps) {
             aria-setsize={renderedItems.length}
             aria-posinset={i + 1}
           />
-        )
+        ),
       )}
     </>
-  )
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -954,24 +969,22 @@ function CascaderItems({ children }: CascaderItemsProps) {
 
 // Whether a `CascaderLabel` has a group to name: Base UI's `Combobox.GroupLabel`
 // THROWS when there is none, and a heading is useful outside a group.
-const CascaderGroupContext = React.createContext(false)
+const CascaderGroupContext = React.createContext(false);
 
 // A heading over a run of rows. All eight styles are spelled out because the
 // type is not uniform (sera is uppercase), and the inset is the row's own.
-const CASCADER_LABEL_CLASS = `text-muted-foreground text-xs py-2 ${CASCADER_ACTION_INSET_CLASS} block truncate`
+const CASCADER_LABEL_CLASS = `text-muted-foreground text-xs py-2 ${CASCADER_ACTION_INSET_CLASS} block truncate`;
 
 // A rule between two runs. The inline margin is not the combobox separator's:
 // that cancels the container's padding with a per-style number, wrong in a
 // footer and 4px too much in lyra. `--cascader-list-pad` reaches the edge.
 const CASCADER_SEPARATOR_CLASS =
-  "h-px bg-border mx-[calc(var(--cascader-list-pad,4px)*-1)]! shrink-0"
+  "h-px bg-border mx-[calc(var(--cascader-list-pad,4px)*-1)]! shrink-0";
 
-export interface CascaderGroupProps extends Omit<
-  ComboboxPrimitive.Group.Props,
-  "className"
-> {
+export interface CascaderGroupProps
+  extends Omit<ComboboxPrimitive.Group.Props, "className"> {
   /** Base UI also accepts a state callback here; the group has no state. */
-  className?: string
+  className?: string;
 }
 
 /** A run of related rows, named by the `CascaderLabel` inside it: the group is
@@ -988,16 +1001,14 @@ function CascaderGroup({ className, ...props }: CascaderGroupProps) {
         {...props}
       />
     </CascaderGroupContext.Provider>
-  )
+  );
 }
 
-export interface CascaderLabelProps extends Omit<
-  ComboboxPrimitive.GroupLabel.Props,
-  "className" | "style"
-> {
+export interface CascaderLabelProps
+  extends Omit<ComboboxPrimitive.GroupLabel.Props, "className" | "style"> {
   /** No state callback; outside a group this is not a Base UI part at all. */
-  className?: string
-  style?: React.CSSProperties
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 /** Inside a group: the real thing, with the id association Base UI wires up. */
@@ -1008,7 +1019,7 @@ function CascaderGroupLabel({ className, ...props }: CascaderLabelProps) {
       className={cn(CASCADER_LABEL_CLASS, className)}
       {...props}
     />
-  )
+  );
 }
 
 // Outside a group: the same heading as a plain element. A separate component
@@ -1017,32 +1028,30 @@ function CascaderPlainLabel({ className, ...props }: CascaderLabelProps) {
   const defaultProps = {
     "data-slot": "cascader-label",
     className: cn(CASCADER_LABEL_CLASS, className),
-  }
+  };
 
   return useRender({
     defaultTagName: "div",
     render: props.render,
     props: mergeProps<"div">(defaultProps, props),
-  })
+  });
 }
 
 /** A heading. Inside `CascaderGroup` it is the group's accessible name; outside
  *  one (the footer flyout is a menu, not a listbox) it is decoration only. */
 function CascaderLabel(props: CascaderLabelProps) {
-  const grouped = React.useContext(CascaderGroupContext)
+  const grouped = React.useContext(CascaderGroupContext);
   return grouped ? (
     <CascaderGroupLabel {...props} />
   ) : (
     <CascaderPlainLabel {...props} />
-  )
+  );
 }
 
-export interface CascaderSeparatorProps extends Omit<
-  ComboboxPrimitive.Separator.Props,
-  "className"
-> {
+export interface CascaderSeparatorProps
+  extends Omit<ComboboxPrimitive.Separator.Props, "className"> {
   /** Base UI also accepts a state callback here; only the orientation varies. */
-  className?: string
+  className?: string;
 }
 
 /** Decorative on purpose: Base UI's separator is `role="separator"`, which a
@@ -1057,7 +1066,7 @@ function CascaderSeparator({ className, ...props }: CascaderSeparatorProps) {
       className={cn(CASCADER_SEPARATOR_CLASS, className)}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -1066,4 +1075,4 @@ export {
   CascaderItems,
   CascaderLabel,
   CascaderSeparator,
-}
+};

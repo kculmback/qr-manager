@@ -13,6 +13,8 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
+    "@better-auth-ui/core": "^1.7.7",
+    "@better-auth-ui/react": "^1.7.7",
     "@qr-manager/api": "workspace:*",
     "@qr-manager/auth": "workspace:*",
     "@qr-manager/db": "workspace:*",
@@ -28,6 +30,7 @@
     "@trpc/server": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
     "better-auth": "catalog:",
+    "bowser": "^2.14.1",
     "nitro": "3.0.260610-beta",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",

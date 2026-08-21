@@ -1,14 +1,55 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { FilterFieldPicker } from "@qr-manager/ui/components/reui/filters/filters-builder"
+import * as React from "react";
+import {
+  ChevronDownIcon,
+  CircleAlertIcon,
+  CopyIcon,
+  EllipsisVerticalIcon,
+  FolderPlusIcon,
+  GripVerticalIcon,
+  ListFilterIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  Trash2Icon,
+  UngroupIcon,
+  XIcon,
+} from "lucide-react";
+
+import type { FilterActionsContextValue } from "@qr-manager/ui/components/reui/filters/filters-context";
+import type {
+  FilterCombinator,
+  FilterEmptyStateContext,
+  FilterField,
+  FilterGroupNode,
+  FilterIssue,
+  FilterNode,
+  FilterOperator,
+  FilterQuery,
+  FilterRule,
+} from "@qr-manager/ui/components/reui/filters/filters-types";
+import { Button } from "@qr-manager/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@qr-manager/ui/components/dropdown-menu";
+import { Input } from "@qr-manager/ui/components/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@qr-manager/ui/components/popover";
+import { FilterFieldPicker } from "@qr-manager/ui/components/reui/filters/filters-builder";
 import {
   FilterMoveToMenuItems,
   FilterOperatorPopover,
   FilterRuleMenuItems,
   FilterValuePopover,
   useFilterRuleDisplay,
-} from "@qr-manager/ui/components/reui/filters/filters-chip"
+} from "@qr-manager/ui/components/reui/filters/filters-chip";
 import {
   filterControlSizes,
   filterReadOnlyProps,
@@ -25,13 +66,12 @@ import {
   useFilterRowStateStore,
   useFilterSegmentFocus,
   useFilterState,
-  type FilterActionsContextValue,
-} from "@qr-manager/ui/components/reui/filters/filters-context"
+} from "@qr-manager/ui/components/reui/filters/filters-context";
 import {
   FILTER_ROW_SELECTOR,
   useFilterRowDrag,
-} from "@qr-manager/ui/components/reui/filters/filters-dnd"
-import { filterIssueLabel } from "@qr-manager/ui/components/reui/filters/filters-i18n"
+} from "@qr-manager/ui/components/reui/filters/filters-dnd";
+import { filterIssueLabel } from "@qr-manager/ui/components/reui/filters/filters-i18n";
 import {
   FILTER_FIELD_PICKER_CLASS,
   FILTER_MENU_CLASS,
@@ -40,113 +80,87 @@ import {
   getFilterField,
   isFilterFieldPickable,
   joinFilterPath,
-} from "@qr-manager/ui/components/reui/filters/filters-lib"
+} from "@qr-manager/ui/components/reui/filters/filters-lib";
 import {
   getFilterArity,
   getFilterOperator,
   operatorTakesValue,
-} from "@qr-manager/ui/components/reui/filters/filters-operators"
+} from "@qr-manager/ui/components/reui/filters/filters-operators";
 import {
   collectFilterIssues,
   createFilterRule,
   isFilterRule,
-} from "@qr-manager/ui/components/reui/filters/filters-query"
-import type {
-  FilterCombinator,
-  FilterEmptyStateContext,
-  FilterField,
-  FilterGroupNode,
-  FilterIssue,
-  FilterNode,
-  FilterOperator,
-  FilterQuery,
-  FilterRule,
-} from "@qr-manager/ui/components/reui/filters/filters-types"
-
-import { cn } from "@qr-manager/ui/lib/utils"
-import { Button } from "@qr-manager/ui/components/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@qr-manager/ui/components/dropdown-menu"
-import { Input } from "@qr-manager/ui/components/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@qr-manager/ui/components/popover"
+} from "@qr-manager/ui/components/reui/filters/filters-query";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@qr-manager/ui/components/tooltip"
-import { RefreshCwIcon, CircleAlertIcon, GripVerticalIcon, ChevronDownIcon, EllipsisVerticalIcon, XIcon, PlusIcon, CopyIcon, UngroupIcon, Trash2Icon, ListFilterIcon, FolderPlusIcon } from "lucide-react"
+} from "@qr-manager/ui/components/tooltip";
+import { cn } from "@qr-manager/ui/lib/utils";
 
 /* -------------------------------------------------------------------------- */
 /*                                  Columns                                   */
 /* -------------------------------------------------------------------------- */
 
-const CONTENT_COLUMNS = ["combinator", "field", "operator", "value"] as const
+const CONTENT_COLUMNS = ["combinator", "field", "operator", "value"] as const;
 
-const ACTION_COLUMNS = ["drag", "menu", "add", "remove"] as const
+const ACTION_COLUMNS = ["drag", "menu", "add", "remove"] as const;
 
 /** Every column a row may draw, in two bands. Navigation is by COLUMN NAME and
  * never position: the BANDS keep ArrowDown off a group's footer button. */
 type FilterColumn =
   | (typeof CONTENT_COLUMNS)[number]
-  | (typeof ACTION_COLUMNS)[number]
+  | (typeof ACTION_COLUMNS)[number];
 
 /** The nearest column in `band` that `available` has; backward wins a tie. */
 function nearestColumn(
   band: readonly FilterColumn[],
   from: FilterColumn,
-  available: Map<string | null, HTMLElement>
+  available: Map<string | null, HTMLElement>,
 ): HTMLElement | undefined {
-  const at = band.indexOf(from)
-  if (at === -1) return undefined
+  const at = band.indexOf(from);
+  if (at === -1) return undefined;
   for (let step = 0; step < band.length; step++) {
-    const before = step === 0 ? undefined : available.get(band[at - step] ?? "")
-    if (before) return before
-    const after = available.get(band[at + step] ?? "")
-    if (after) return after
+    const before =
+      step === 0 ? undefined : available.get(band[at - step] ?? "");
+    if (before) return before;
+    const after = available.get(band[at + step] ?? "");
+    if (after) return after;
   }
-  return undefined
+  return undefined;
 }
 
 /** Marks a focusable cell control, read by the keyboard walker. Not
  * `data-slot`: a cell control is handed to a Base UI trigger through `render`,
  * which stamps its own, so a slot here would be two owners on one attribute. */
-const CELL_ATTRIBUTE = "data-filter-cell"
+const CELL_ATTRIBUTE = "data-filter-cell";
 
 /** Marks a cell the user TYPES into: the builder claims the arrows, Home, End
  * and Delete, and each means something else in a text box. */
-const CELL_INPUT_ATTRIBUTE = "data-filter-cell-input"
+const CELL_INPUT_ATTRIBUTE = "data-filter-cell-input";
 
-const ROW_SELECTOR = FILTER_ROW_SELECTOR
+const ROW_SELECTOR = FILTER_ROW_SELECTOR;
 
 /** Hands every row's handle its pointer wiring: only the panel, which owns the
  * body element, can measure a drop. */
 
 const FilterDragContext = React.createContext<ReturnType<
   typeof useFilterRowDrag
-> | null>(null)
+> | null>(null);
 
 /** What each node is missing, by id. An empty map by default, so a row mounted
  * outside the shipped panel gets "nothing is wrong" instead of a throw. */
 const FilterIssueContext = React.createContext<
   ReadonlyMap<string, FilterIssue>
->(new Map())
+>(new Map());
 
 function cellProps(column: FilterColumn, active: FilterColumn | null) {
   return {
     "data-filter-cell": column,
     // ONE tab stop for the whole builder; the arrows move within it.
     tabIndex: active === column ? 0 : -1,
-  }
+  };
 }
 
 /** What an INVALID cell wears: `aria-invalid` to announce it, `data-invalid`
@@ -154,21 +168,21 @@ function cellProps(column: FilterColumn, active: FilterColumn | null) {
 function issueProps(
   issue: FilterIssue | undefined,
   column: FilterIssue["column"],
-  message: string
+  message: string,
 ) {
-  if (!issue || issue.column !== column) return null
+  if (!issue || issue.column !== column) return null;
   return {
     "aria-invalid": true,
     "data-invalid": "",
     "aria-description": message,
     // NO `title`: the hint icon carries the sentence in a real tooltip, and a
     // native one would clobber the truncation `title` beside it.
-  } as const
+  } as const;
 }
 
 /** Sera's uppercase and wide tracking cost about a third of a cell, so where
  * every other style drew "migration" sera drew "MIGRATI...". */
-const SERA_TEXT_CLASS = ""
+const SERA_TEXT_CLASS = "";
 
 const CELL_CLASS = cn(
   "w-full min-w-0 justify-between gap-1.5 font-normal",
@@ -181,13 +195,13 @@ const CELL_CLASS = cn(
   // THIS cell is, and one panel holds a 300px cell and a 40px one.
   "@max-[7rem]/cell:gap-0 @max-[7rem]/cell:[&>svg]:hidden",
   "@max-[5rem]/cell:[&_span>svg]:hidden",
-  SERA_TEXT_CLASS
-)
+  SERA_TEXT_CLASS,
+);
 
 /** What an invalid cell looks like. A ring, not a border: a border changes the
  * box, so a cell turning invalid would nudge every cell beside it. */
 const CELL_INVALID_CLASS =
-  "data-invalid:ring-destructive/40 data-invalid:ring-1"
+  "data-invalid:ring-destructive/40 data-invalid:ring-1";
 
 /** Width of the leading combinator column. The 58.72px pill put this track at
  * 4rem and it does not shrink now the pill has: it is sized for the longest of
@@ -196,26 +210,26 @@ const COMBINATOR_CLASS = cn(
   "w-16 shrink-0 items-center justify-center",
   // 6px of its own on TOP of the band's `gap-1.5`: this column is the
   // sentence's connective, not a fourth control butted against the attribute.
-  "me-1.5"
-)
+  "me-1.5",
+);
 
 /** The two static words in that column, CENTRED because the pill's own
  * `justify-center` centres its word. `w-full`, or `truncate` has no box. */
 const COMBINATOR_TEXT_CLASS = cn(
   "text-muted-foreground w-full truncate px-1 text-center text-sm",
-  SERA_TEXT_CLASS
-)
+  SERA_TEXT_CLASS,
+);
 
 /** A row is TWO BANDS. The trailing pair of every row at every depth shares one
  * vertical axis - 0.00px of spread from 1104px to 240px, eight styles, depth
  * three - and only because the content band may shrink to nothing. */
-const ROW_BAND_CLASS = "flex min-w-0 items-center gap-1.5"
+const ROW_BAND_CLASS = "flex min-w-0 items-center gap-1.5";
 
-const CONTENT_BAND_CLASS = "flex min-w-0 flex-1 items-center gap-1.5"
+const CONTENT_BAND_CLASS = "flex min-w-0 flex-1 items-center gap-1.5";
 
 /** FLEX and not a block: a `Button` is `inline-flex`, so a block wrapper builds
  * a line box as tall as its font's strut - 28px buttons in 28.141px wrappers. */
-const CELL_BOX_CLASS = "@container/cell flex min-w-0 shrink grow-0"
+const CELL_BOX_CLASS = "@container/cell flex min-w-0 shrink grow-0";
 
 /** THE DEFAULT WIDTH OF EACH CONTENT CELL. An INLINE FALLBACK and not a
  * declaration on the panel: declared, the panel would beat anything an ANCESTOR
@@ -225,78 +239,79 @@ const CELL_BOX_CLASS = "@container/cell flex min-w-0 shrink grow-0"
  *   <FiltersAdvancedPanel className="[--filter-operator-width:7rem]" />
  *   <Card className="[--filter-value-width:16rem]"><Filters … /></Card>
  *   [data-slot="filters-advanced"] { --filter-field-width: 14rem } */
-const FIELD_CELL_CLASS = "basis-[var(--filter-field-width,11rem)]"
-const OPERATOR_CELL_CLASS = "basis-[var(--filter-operator-width,9rem)]"
-const VALUE_CELL_CLASS = "basis-[var(--filter-value-width,12rem)]"
+const FIELD_CELL_CLASS = "basis-[var(--filter-field-width,11rem)]";
+const OPERATOR_CELL_CLASS = "basis-[var(--filter-operator-width,9rem)]";
+const VALUE_CELL_CLASS = "basis-[var(--filter-value-width,12rem)]";
 
 /** The trailing band. `pe-1` is on the BAND and not the gutter, since a group
  * card is `pe-0`; the footer and `DROP_SLOT_INDICATOR` restate the same four. */
 const ACTION_BAND_CLASS = cn(
-  "text-muted-foreground flex shrink-0 items-center gap-0.5 pe-1"
-)
+  "text-muted-foreground flex shrink-0 items-center gap-0.5 pe-1",
+);
 
 /** What the grip and the kebab wear while open. TWO ATTRIBUTES, because Radix
  * sets `data-state="open"` and Base UI `data-popup-open`, so one selector alone
  * would be dead in one twin, silently, in a byte-locked file. */
 const ACTION_CONTROL_CLASS = cn(
-  "hover:inset-ring hover:inset-ring-border",
+  "hover:inset-ring-border hover:inset-ring",
   // Base UI.
-  "data-popup-open:inset-ring data-popup-open:inset-ring-border",
+  "data-popup-open:inset-ring-border data-popup-open:inset-ring",
   // Radix.
-  "data-[state=open]:inset-ring data-[state=open]:inset-ring-border"
-)
+  "data-[state=open]:inset-ring-border data-[state=open]:inset-ring",
+);
 
 /** The gap between sibling rows, one third of one measurement:
  * `FILTER_ROW_SEAM_PX` is HALF of it and the footer's `-mt-*` cancels it. */
-const FILTER_ROW_GAP_CLASS = "gap-3"
-const FILTER_ROW_GAP_CANCEL_CLASS = "-mt-3"
+const FILTER_ROW_GAP_CLASS = "gap-3";
+const FILTER_ROW_GAP_CANCEL_CLASS = "-mt-3";
 const FILTER_ROW_HALF_GAP_CLASS = {
   // The slot names the BOUNDARY between two rows, which is the middle of the
   // gap: 6px of it less HALF the rule's own 2px, so its CENTRE lands there.
   before: "data-[drop-edge=before]:after:mb-[5px]",
   after: "data-[drop-edge=after]:after:mt-[5px]",
-} as const
+} as const;
 
 /** POPOVER: the popover content is `p-0`, so this IS the popup's own inner
  * padding. INLINE there is no popup, and a panel that pads itself as well is a
  * second inset the page did not ask for. */
-const PANEL_PAD_VAR = "--filter-panel-pad"
-const PANEL_PAD_POPOVER = "0.75rem"
-const PANEL_PAD_INLINE = "0px"
+const PANEL_PAD_VAR = "--filter-panel-pad";
+const PANEL_PAD_POPOVER = "0.75rem";
+const PANEL_PAD_INLINE = "0px";
 
 /** The panel's ONE horizontal rhythm: a row's trailing controls sit at the
  * content edge, which IS this padding, so a footer that disagrees breaks it. */
-const PANEL_GUTTER_CLASS = "px-(--filter-panel-pad)"
+const PANEL_GUTTER_CLASS = "px-(--filter-panel-pad)";
 
-const PANEL_CLASS = "flex w-full min-w-0 flex-col gap-2 py-(--filter-panel-pad)"
+const PANEL_CLASS =
+  "flex w-full min-w-0 flex-col gap-2 py-(--filter-panel-pad)";
 
 /** A RING and not a border, the whole answer to the staggered trailing
  * controls: a border pushes the content edge inward a pixel per level. */
 const GROUP_CARD_CLASS = cn(
   "bg-muted/40 min-w-0 flex-1 rounded-md",
-  "inset-ring inset-ring-border",
+  "inset-ring-border inset-ring",
   "ps-2 pe-0",
   "data-invalid:inset-ring-destructive/50",
   // The DESTINATION of a drop into this group, told apart from the insertion
   // slot by STYLE and not size: dashed is not there yet, solid exists.
   "data-drop-into:bg-muted/60",
   "data-drop-into:outline-1 data-drop-into:outline-solid",
-  "data-drop-into:outline-border data-drop-into:-outline-offset-2"
-)
+  "data-drop-into:outline-border data-drop-into:-outline-offset-2",
+);
 
 /** THE CONTAINER a row measures its own room against, on the panel body and on
  * every group's list, so a row asks how wide the list it is IN is. */
-const TRACK_CONTAINER_CLASS = "@container/track"
+const TRACK_CONTAINER_CLASS = "@container/track";
 
 /** When a group stops putting its combinator BESIDE the card. A DEPTH budget
  * was wrong both ways: at 380px the depth-three row painted zero pixels of
  * field, operator and value and fanned the kebab column out by up to 119px.
  * 26rem is what a row MEASURES: 134px of fixed cost plus about 200px of cells. */
-const GROUP_COMBINATOR_WRAP_CLASS = "@max-[26rem]/track:w-full"
+const GROUP_COMBINATOR_WRAP_CLASS = "@max-[26rem]/track:w-full";
 
 /** The combinator itself, once its wrapper has a whole line. Pinned to the
  * same 4rem the gutter track is, so it is the same control at every width. */
-const GROUP_COMBINATOR_WRAPPED_CLASS = "@max-[26rem]/track:w-16"
+const GROUP_COMBINATOR_WRAPPED_CLASS = "@max-[26rem]/track:w-16";
 
 /** How a row shows where a dragged node would land. `data-drop-edge` is an
  * insertion BETWEEN rows, drawn here; `data-drop-into` is painted on the CARD,
@@ -317,13 +332,13 @@ const DROP_SLOT_INDICATOR = cn(
   "data-[drop-edge=before]:after:bottom-full",
   FILTER_ROW_HALF_GAP_CLASS.before,
   "data-[drop-edge=after]:after:top-full",
-  FILTER_ROW_HALF_GAP_CLASS.after
-)
+  FILTER_ROW_HALF_GAP_CLASS.after,
+);
 
 /** What a CONDITION row draws, which is what a group's row draws: the slot and
  * nothing else. It used to add a faint dashed outline of its own, a second
  * dashed rectangle a few pixels from the first saying what it already said. */
-const DROP_INDICATOR = DROP_SLOT_INDICATOR
+const DROP_INDICATOR = DROP_SLOT_INDICATOR;
 
 /** How the footer says "append to the top level": the same RULE the rows draw.
  * `data-drop-into` and not `data-drop-edge`, because an explicit zone is a
@@ -334,15 +349,15 @@ const FOOTER_DROP_CLASS = cn(
   "data-drop-into:after:start-(--filter-panel-pad)",
   "data-drop-into:after:end-[calc(var(--filter-panel-pad)+4px)]",
   "data-drop-into:after:top-0 data-drop-into:after:h-0.5",
-  "data-drop-into:after:rounded-full data-drop-into:after:bg-primary"
-)
+  "data-drop-into:after:bg-primary data-drop-into:after:rounded-full",
+);
 
 /** The cells a row owns ITSELF: a group's row contains its children's rows, so
  * a bare `querySelectorAll` would let ArrowRight walk into the first of them. */
 function ownCells(row: HTMLElement): HTMLElement[] {
   return Array.from(
-    row.querySelectorAll<HTMLElement>(`[${CELL_ATTRIBUTE}]`)
-  ).filter((cell) => cell.closest<HTMLElement>(ROW_SELECTOR) === row)
+    row.querySelectorAll<HTMLElement>(`[${CELL_ATTRIBUTE}]`),
+  ).filter((cell) => cell.closest<HTMLElement>(ROW_SELECTOR) === row);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -350,10 +365,10 @@ function ownCells(row: HTMLElement): HTMLElement[] {
 /* -------------------------------------------------------------------------- */
 
 interface RowPosition {
-  index: number
-  parentId: string
-  combinator: FilterCombinator
-  depth: number
+  index: number;
+  parentId: string;
+  combinator: FilterCombinator;
+  depth: number;
 }
 
 /** The leading and/or slot: one group is joined by ONE operator, and mixing is
@@ -366,31 +381,31 @@ function CombinatorCell({
   onFocus,
   className,
 }: {
-  index: number
-  parentId: string
-  combinator: FilterCombinator
-  active: FilterColumn | null
-  onFocus: (column: FilterColumn) => () => void
-  className?: string
+  index: number;
+  parentId: string;
+  combinator: FilterCombinator;
+  active: FilterColumn | null;
+  onFocus: (column: FilterColumn) => () => void;
+  className?: string;
 }) {
-  const actions = useFilterActions()
-  const sizes = filterControlSizes(actions)
-  const slot = filterCombinatorSlot(index)
-  const word = combinator === "and" ? actions.labels.and : actions.labels.or
+  const actions = useFilterActions();
+  const sizes = filterControlSizes(actions);
+  const slot = filterCombinatorSlot(index);
+  const word = combinator === "and" ? actions.labels.and : actions.labels.or;
 
   if (slot === "where") {
     return (
       <span className={cn(COMBINATOR_TEXT_CLASS, className)}>
         {actions.labels.where}
       </span>
-    )
+    );
   }
 
   if (slot === "echo") {
-    return <span className={cn(COMBINATOR_TEXT_CLASS, className)}>{word}</span>
+    return <span className={cn(COMBINATOR_TEXT_CLASS, className)}>{word}</span>;
   }
 
-  const name = actions.labels.combinatorLabel(word)
+  const name = actions.labels.combinatorLabel(word);
 
   return (
     <Button
@@ -405,7 +420,7 @@ function CombinatorCell({
       className={cn(
         "group/combinator relative w-full min-w-0 justify-center px-1.5 font-normal",
         SERA_TEXT_CLASS,
-        className
+        className,
       )}
       {...cellProps("combinator", active)}
       onFocus={onFocus("combinator")}
@@ -419,14 +434,13 @@ function CombinatorCell({
           "pointer-events-none absolute end-1 opacity-0 transition-opacity",
           "group-hover/combinator:opacity-60",
           "group-focus-visible/combinator:opacity-60",
-          "[&_svg]:size-3"
+          "[&_svg]:size-3",
         )}
       >
-        <RefreshCwIcon
-        />
+        <RefreshCwIcon />
       </span>
     </Button>
-  )
+  );
 }
 
 /** Whether dragging this node could change the tree at all; the grip is drawn
@@ -438,10 +452,10 @@ function CombinatorCell({
  * are different sentences. */
 function canFilterNodeMove(
   query: FilterQuery<unknown>,
-  position: { parentId: string }
+  position: { parentId: string },
 ) {
-  if (position.parentId !== query.id) return true
-  return query.rules.length > 1
+  if (position.parentId !== query.id) return true;
+  return query.rules.length > 1;
 }
 
 /** The error, as a QUIET mark the pointer can ask about: ONE per ROW, and
@@ -450,10 +464,10 @@ function RowIssueHint({
   message,
   className,
 }: {
-  message: string
-  className?: string
+  message: string;
+  className?: string;
 }) {
-  if (!message) return null
+  if (!message) return null;
   return (
     <TooltipProvider delay={200}>
       <Tooltip>
@@ -467,18 +481,17 @@ function RowIssueHint({
               aria-hidden="true"
               className={cn(
                 "text-destructive flex shrink-0 items-center justify-center [&_svg]:size-3.5",
-                className
+                className,
               )}
             >
-              <CircleAlertIcon
-              />
+              <CircleAlertIcon />
             </span>
           }
         />
         <TooltipContent side="top">{message}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
+  );
 }
 
 /** The drag handle: what ARMS the gesture, since arming the row would turn
@@ -489,14 +502,14 @@ function RowHandle({
   active,
   onFocus,
 }: {
-  nodeId: string
-  active: FilterColumn | null
-  onFocus: (column: FilterColumn) => () => void
+  nodeId: string;
+  active: FilterColumn | null;
+  onFocus: (column: FilterColumn) => () => void;
 }) {
-  const actions = useFilterActions()
-  const sizes = filterControlSizes(actions)
-  const dragProps = React.useContext(FilterDragContext)
-  const locked = isFilterLocked(actions)
+  const actions = useFilterActions();
+  const sizes = filterControlSizes(actions);
+  const dragProps = React.useContext(FilterDragContext);
+  const locked = isFilterLocked(actions);
 
   return (
     <Button
@@ -514,17 +527,16 @@ function RowHandle({
       className={cn(
         "focus-visible:text-foreground cursor-grab touch-none",
         "active:cursor-grabbing",
-        ACTION_CONTROL_CLASS
+        ACTION_CONTROL_CLASS,
       )}
       {...cellProps("drag", active)}
       onFocus={onFocus("drag")}
       /* Not armed at all while locked; the engine refuses it again. */
       {...(locked ? null : dragProps?.(nodeId))}
     >
-      <GripVerticalIcon
-      />
+      <GripVerticalIcon />
     </Button>
-  )
+  );
 }
 
 /** Which cell of a row owns the builder's single tab stop. An operator change
@@ -532,22 +544,22 @@ function RowHandle({
 function useActiveColumn(
   nodeId: string,
   columns: FilterColumn[],
-  isFirstRow: boolean
+  isFirstRow: boolean,
 ): FilterColumn | null {
-  const focused = useFilterChipFocused(nodeId)
-  const segment = useFilterSegmentFocus(nodeId)
-  const noFocus = useFilterFocusEmpty()
+  const focused = useFilterChipFocused(nodeId);
+  const segment = useFilterSegmentFocus(nodeId);
+  const noFocus = useFilterFocusEmpty();
 
   if (focused) {
     return segment && columns.includes(segment as FilterColumn)
       ? (segment as FilterColumn)
-      : columns[0]
+      : columns[0];
   }
-  return noFocus && isFirstRow ? columns[0] : null
+  return noFocus && isFirstRow ? columns[0] : null;
 }
 
 function useFilterIssue(nodeId: string): FilterIssue | undefined {
-  return React.useContext(FilterIssueContext).get(nodeId)
+  return React.useContext(FilterIssueContext).get(nodeId);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -561,14 +573,14 @@ function useFilterIssue(nodeId: string): FilterIssue | undefined {
 function usesInlineTextEditor<V, O>(
   field: FilterField<V, O>,
   operator: FilterOperator | undefined,
-  hasCustomDisplay: boolean
+  hasCustomDisplay: boolean,
 ): boolean {
-  if (field.editor) return false
-  if (field.options || field.loadOptions) return false
-  if (field.renderValue || field.valueText || hasCustomDisplay) return false
-  const type = field.type ?? "text"
-  if (type !== "text" && type !== "number") return false
-  return getFilterArity(operator) === "one"
+  if (field.editor) return false;
+  if (field.options || field.loadOptions) return false;
+  if (field.renderValue || field.valueText || hasCustomDisplay) return false;
+  const type = field.type ?? "text";
+  if (type !== "text" && type !== "number") return false;
+  return getFilterArity(operator) === "one";
 }
 
 /** The value cell as a real text box. COMMIT IS BLUR AND ENTER: per keystroke
@@ -582,67 +594,67 @@ function FilterInlineValueCell<V, O>({
   active,
   onFocus,
 }: {
-  rule: FilterRule<V>
-  field: FilterField<V, O>
-  issue: FilterIssue | undefined
-  issueText: string
-  active: FilterColumn | null
-  onFocus: (column: FilterColumn) => () => void
+  rule: FilterRule<V>;
+  field: FilterField<V, O>;
+  issue: FilterIssue | undefined;
+  issueText: string;
+  active: FilterColumn | null;
+  onFocus: (column: FilterColumn) => () => void;
 }) {
-  const actions = useFilterActions<V, O>()
-  const focusStore = useFilterFocusStore()
-  const locked = isFilterLocked(actions)
-  const numeric = (field.type ?? "text") === "number"
+  const actions = useFilterActions<V, O>();
+  const focusStore = useFilterFocusStore();
+  const locked = isFilterLocked(actions);
+  const numeric = (field.type ?? "text") === "number";
   // The handoff the value POPOVER honours, answered by taking the caret.
-  const autoOpen = useFilterChipAutoOpen(rule.id) === "value"
-  const inputRef = React.useRef<HTMLInputElement>(null)
+  const autoOpen = useFilterChipAutoOpen(rule.id) === "value";
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const committed =
-    rule.value === undefined || rule.value === null ? "" : String(rule.value)
-  const [draft, setDraft] = React.useState(committed)
+    rule.value === undefined || rule.value === null ? "" : String(rule.value);
+  const [draft, setDraft] = React.useState(committed);
   // STATE and not a ref: the sync below runs during render.
-  const [seed, setSeed] = React.useState(committed)
+  const [seed, setSeed] = React.useState(committed);
 
   // Adjusting state during render; an effect would paint the stale text.
   if (seed !== committed) {
-    setSeed(committed)
-    setDraft(committed)
+    setSeed(committed);
+    setDraft(committed);
   }
 
   // CONSUMED as it is honoured: a flag left standing is spent by the next row.
   React.useEffect(() => {
-    if (!autoOpen) return
+    if (!autoOpen) return;
     if (!locked) {
-      const input = inputRef.current
-      input?.focus()
+      const input = inputRef.current;
+      input?.focus();
       // SELECTED: the condition step may have coerced a value across.
-      input?.select()
+      input?.select();
     }
-    focusStore.set({ id: rule.id, segment: "value", autoOpen: false })
-  }, [autoOpen, locked, focusStore, rule.id])
+    focusStore.set({ id: rule.id, segment: "value", autoOpen: false });
+  }, [autoOpen, locked, focusStore, rule.id]);
 
   const commit = () => {
-    if (draft === seed) return
+    if (draft === seed) return;
 
     if (numeric) {
-      const text = draft.trim()
+      const text = draft.trim();
       // Empty clears rather than writing 0, which silently matches rows.
       if (text === "") {
-        actions.updateRule(rule.id, { value: undefined as V })
-        return
+        actions.updateRule(rule.id, { value: undefined as V });
+        return;
       }
-      const parsed = Number(text)
+      const parsed = Number(text);
       // Revert, do not write: a NaN compares false against every row.
       if (!Number.isFinite(parsed)) {
-        setDraft(seed)
-        return
+        setDraft(seed);
+        return;
       }
-      actions.updateRule(rule.id, { value: parsed as V })
-      return
+      actions.updateRule(rule.id, { value: parsed as V });
+      return;
     }
 
-    actions.updateRule(rule.id, { value: draft as V })
-  }
+    actions.updateRule(rule.id, { value: draft as V });
+  };
 
   return (
     /* A FRAGMENT, not a wrapper: the positioning context for the error mark
@@ -670,17 +682,17 @@ function FilterInlineValueCell<V, O>({
         onBlur={commit}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-            event.preventDefault()
-            commit()
-            return
+            event.preventDefault();
+            commit();
+            return;
           }
           if (event.key === "Escape") {
             /* Only when there is something to revert; Escape belongs to the
                surface the builder sits in. */
-            if (draft === seed) return
-            event.preventDefault()
-            event.stopPropagation()
-            setDraft(seed)
+            if (draft === seed) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setDraft(seed);
           }
         }}
       />
@@ -690,7 +702,7 @@ function FilterInlineValueCell<V, O>({
         className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 [&>*]:pointer-events-auto"
       />
     </>
-  )
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -698,32 +710,32 @@ function FilterInlineValueCell<V, O>({
 /* -------------------------------------------------------------------------- */
 
 export interface FilterAdvancedRowProps<V = unknown> {
-  rule: FilterRule<V>
-  position: RowPosition
+  rule: FilterRule<V>;
+  position: RowPosition;
 }
 
 function FilterAdvancedRowImpl<V, O>({
   rule,
   position,
 }: FilterAdvancedRowProps<V>) {
-  const actions = useFilterActions<V, O>()
-  const render = useFilterRender<V, O>()
-  const sizes = filterControlSizes(actions)
-  const focusStore = useFilterFocusStore()
-  const locked = isFilterLocked(actions)
-  const { query } = useFilterState<V>()
+  const actions = useFilterActions<V, O>();
+  const render = useFilterRender<V, O>();
+  const sizes = filterControlSizes(actions);
+  const focusStore = useFilterFocusStore();
+  const locked = isFilterLocked(actions);
+  const { query } = useFilterState<V>();
 
-  const field = getFilterField(actions.index, rule.path)
-  const operators = field ? actions.resolveOperators(field) : []
-  const operator = getFilterOperator(operators, rule.operator)
-  const takesValue = Boolean(rule.operator) && operatorTakesValue(operator)
+  const field = getFilterField(actions.index, rule.path);
+  const operators = field ? actions.resolveOperators(field) : [];
+  const operator = getFilterOperator(operators, rule.operator);
+  const takesValue = Boolean(rule.operator) && operatorTakesValue(operator);
   const inlineValue =
     takesValue && field
       ? usesInlineTextEditor(field, operator, Boolean(render.renderValue))
-      : false
+      : false;
 
-  const issue = useFilterIssue(rule.id)
-  const issueText = issue ? filterIssueLabel(issue, actions.labels) : ""
+  const issue = useFilterIssue(rule.id);
+  const issueText = issue ? filterIssueLabel(issue, actions.labels) : "";
 
   const {
     pathText,
@@ -734,76 +746,76 @@ function FilterAdvancedRowImpl<V, O>({
     valueText,
     valueFullText,
     valueEmpty,
-  } = useFilterRuleDisplay<V, O>(rule, field, operator)
+  } = useFilterRuleDisplay<V, O>(rule, field, operator);
 
   /* ------------------------------ field cell ------------------------------ */
 
-  const fieldAutoOpen = useFilterChipAutoOpen(rule.id) === "field"
-  const [pickerOpen, setPickerOpen] = React.useState(false)
+  const fieldAutoOpen = useFilterChipAutoOpen(rule.id) === "field";
+  const [pickerOpen, setPickerOpen] = React.useState(false);
   // Controlled so both can REFUSE to open while locked.
-  const [menuOpen, setMenuOpen] = React.useState(false)
+  const [menuOpen, setMenuOpen] = React.useState(false);
   // Seeded from the rule's own level, so amending opens beside its siblings.
   const [pickerPath, setPickerPath] = React.useState<string[]>(() =>
-    rule.path.slice(0, -1)
-  )
-  const [pickerQuery, setPickerQuery] = React.useState("")
+    rule.path.slice(0, -1),
+  );
+  const [pickerQuery, setPickerQuery] = React.useState("");
 
   // A new row arrives with a GUESS at its field, so the one choice not yet the
   // user's own opens itself. CONSUMED as it is honoured: `pickerOpen` is a
   // dependency, so a flag left standing reopened the picker in the frame it
   // closed, a keyboard trap on the one row a user creates most.
   React.useEffect(() => {
-    if (!fieldAutoOpen || pickerOpen) return
-    if (!locked) setPickerOpen(true)
-    focusStore.set({ id: rule.id, segment: "field", autoOpen: false })
-  }, [fieldAutoOpen, pickerOpen, locked, focusStore, rule.id])
+    if (!fieldAutoOpen || pickerOpen) return;
+    if (!locked) setPickerOpen(true);
+    focusStore.set({ id: rule.id, segment: "field", autoOpen: false });
+  }, [fieldAutoOpen, pickerOpen, locked, focusStore, rule.id]);
 
   // Re-seed on each open, so a browse that was abandoned last time does not
   // decide where this one starts.
   React.useEffect(() => {
-    if (!pickerOpen) return
-    setPickerPath(rule.path.slice(0, -1))
-    setPickerQuery("")
-  }, [pickerOpen, rule.path])
+    if (!pickerOpen) return;
+    setPickerPath(rule.path.slice(0, -1));
+    setPickerQuery("");
+  }, [pickerOpen, rule.path]);
 
   /* ------------------------------- tab stop ------------------------------- */
 
-  const slot = filterCombinatorSlot(position.index)
-  const reorderable = useFilterReorderable()
-  const canMove = reorderable && canFilterNodeMove(query, position)
-  const rowStateStore = useFilterRowStateStore()
+  const slot = filterCombinatorSlot(position.index);
+  const reorderable = useFilterReorderable();
+  const canMove = reorderable && canFilterNodeMove(query, position);
+  const rowStateStore = useFilterRowStateStore();
   // Still waiting for its attribute, so neither later cell is drawn.
-  const pending = useFilterRowPending(rule.id)
+  const pending = useFilterRowPending(rule.id);
 
   const columns = React.useMemo(() => {
-    const list: FilterColumn[] = []
-    if (slot === "toggle") list.push("combinator")
-    list.push("field")
+    const list: FilterColumn[] = [];
+    if (slot === "toggle") list.push("combinator");
+    list.push("field");
     if (!pending) {
-      list.push("operator")
-      if (takesValue) list.push("value")
+      list.push("operator");
+      if (takesValue) list.push("value");
     }
     // The grip is only a tab stop when it is drawn.
-    if (canMove) list.push("drag")
-    list.push("menu")
-    return list
-  }, [slot, takesValue, canMove, pending])
+    if (canMove) list.push("drag");
+    list.push("menu");
+    return list;
+  }, [slot, takesValue, canMove, pending]);
 
   const active = useActiveColumn(
     rule.id,
     columns,
-    position.depth === 1 && position.index === 0
-  )
+    position.depth === 1 && position.index === 0,
+  );
 
   const onCellFocus = React.useCallback(
     (column: FilterColumn) => () =>
       focusStore.set({ id: rule.id, segment: column, autoOpen: false }),
-    [focusStore, rule.id]
-  )
+    [focusStore, rule.id],
+  );
 
   /* -------------------------------- render -------------------------------- */
 
-  if (!field) return null
+  if (!field) return null;
 
   return (
     <div
@@ -812,7 +824,7 @@ function FilterAdvancedRowImpl<V, O>({
       role="group"
       aria-label={actions.labels.rowLabel(
         `${pathText} ${operatorLabel}`,
-        position.depth
+        position.depth,
       )}
       data-slot="filter-row"
       data-node-id={rule.id}
@@ -837,8 +849,8 @@ function FilterAdvancedRowImpl<V, O>({
           <Popover
             open={pickerOpen}
             onOpenChange={(next) => {
-              if (next && locked) return
-              setPickerOpen(next)
+              if (next && locked) return;
+              setPickerOpen(next);
             }}
           >
             <PopoverTrigger
@@ -862,8 +874,7 @@ function FilterAdvancedRowImpl<V, O>({
                     {field.icon}
                     <span className="truncate">{pathLabel}</span>
                   </span>
-                  <ChevronDownIcon
-                  />
+                  <ChevronDownIcon />
                 </Button>
               }
             />
@@ -871,7 +882,7 @@ function FilterAdvancedRowImpl<V, O>({
               align="start"
               className={cn(
                 FILTER_FIELD_PICKER_CLASS,
-                actions.fieldPickerClassName
+                actions.fieldPickerClassName,
               )}
             >
               <FilterFieldPicker<V, O>
@@ -880,26 +891,27 @@ function FilterAdvancedRowImpl<V, O>({
                 query={pickerQuery}
                 onQueryChange={setPickerQuery}
                 onSelect={(path, defaultOperator) => {
-                  setPickerOpen(false)
+                  setPickerOpen(false);
                   // BUILDING versus AMENDING, the fork of the stepped
                   // flow. Naming `operator` retires the field handoff.
                   focusStore.set({
                     id: rule.id,
                     segment: pending ? "operator" : "field",
                     autoOpen: pending,
-                  })
+                  });
                   // BEFORE the same-path early return, or a row minted
                   // on a guessed field the user then picks stays pending.
-                  rowStateStore.resolvePending(rule.id)
+                  rowStateStore.resolvePending(rule.id);
                   // Re-picking the field it has is a dismissal.
-                  if (joinFilterPath(path) === joinFilterPath(rule.path)) return
+                  if (joinFilterPath(path) === joinFilterPath(rule.path))
+                    return;
                   // On the create path the condition stays UNSET, so the
                   // menu opening next has nothing selected.
                   actions.updateRule(rule.id, {
                     path,
                     operator: pending ? "" : (defaultOperator ?? ""),
                     value: undefined,
-                  })
+                  });
                 }}
               />
             </PopoverContent>
@@ -920,15 +932,14 @@ function FilterAdvancedRowImpl<V, O>({
                   className={cn(
                     CELL_CLASS,
                     CELL_INVALID_CLASS,
-                    "text-muted-foreground"
+                    "text-muted-foreground",
                   )}
                   {...cellProps("operator", active)}
                   {...issueProps(issue, "operator", issueText)}
                   onFocus={onCellFocus("operator")}
                 >
                   <span className="truncate">{operatorLabel}</span>
-                  <ChevronDownIcon
-                  />
+                  <ChevronDownIcon />
                 </Button>
               }
             />
@@ -948,7 +959,7 @@ function FilterAdvancedRowImpl<V, O>({
               "relative",
               /* What lets an inline box match the buttons beside it: as tall as
                  the row, so `h-full` inside resolves to the button height. */
-              "self-stretch"
+              "self-stretch",
             )}
           >
             {takesValue ? (
@@ -978,7 +989,7 @@ function FilterAdvancedRowImpl<V, O>({
                         CELL_CLASS,
                         CELL_INVALID_CLASS,
                         "h-full",
-                        valueEmpty && "text-muted-foreground"
+                        valueEmpty && "text-muted-foreground",
                       )}
                       {...cellProps("value", active)}
                       {...issueProps(issue, "value", issueText)}
@@ -1008,8 +1019,8 @@ function FilterAdvancedRowImpl<V, O>({
         <DropdownMenu
           open={menuOpen}
           onOpenChange={(next) => {
-            if (next && locked) return
-            setMenuOpen(next)
+            if (next && locked) return;
+            setMenuOpen(next);
           }}
         >
           <DropdownMenuTrigger
@@ -1026,8 +1037,7 @@ function FilterAdvancedRowImpl<V, O>({
               />
             }
           >
-            <EllipsisVerticalIcon
-            />
+            <EllipsisVerticalIcon />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
@@ -1040,14 +1050,14 @@ function FilterAdvancedRowImpl<V, O>({
         </DropdownMenu>
       </div>
     </div>
-  )
+  );
 }
 
 /** One rule, as a row, memoized: the query tree shares structure, so editing
  * one row of twenty re-renders one. */
 export const FilterAdvancedRow = React.memo(
-  FilterAdvancedRowImpl
-) as typeof FilterAdvancedRowImpl
+  FilterAdvancedRowImpl,
+) as typeof FilterAdvancedRowImpl;
 
 /** A rule whose field the schema no longer has: dropping it would lose a saved
  * view's data, rendering nothing would leave it filtering invisibly. */
@@ -1055,17 +1065,17 @@ function FilterUnknownRow<V>({
   rule,
   position,
 }: {
-  rule: FilterRule<V>
-  position: RowPosition
+  rule: FilterRule<V>;
+  position: RowPosition;
 }) {
-  const actions = useFilterActions()
-  const sizes = filterControlSizes(actions)
+  const actions = useFilterActions();
+  const sizes = filterControlSizes(actions);
   return (
     <div
       role="group"
       aria-label={actions.labels.rowLabel(
         rule.path.join(actions.labels.pathSeparator),
-        position.depth
+        position.depth,
       )}
       data-slot="filter-row"
       data-node-id={rule.id}
@@ -1095,12 +1105,11 @@ function FilterUnknownRow<V>({
           {...filterReadOnlyProps(actions)}
           onClick={() => actions.removeNode(rule.id)}
         >
-          <XIcon
-          />
+          <XIcon />
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1113,57 +1122,57 @@ function FilterAdvancedGroup<V, O>({
   group,
   position,
 }: {
-  group: FilterGroupNode<V>
-  position: RowPosition
+  group: FilterGroupNode<V>;
+  position: RowPosition;
 }) {
-  const actions = useFilterActions<V, O>()
-  const sizes = filterControlSizes(actions)
-  const focusStore = useFilterFocusStore()
+  const actions = useFilterActions<V, O>();
+  const sizes = filterControlSizes(actions);
+  const focusStore = useFilterFocusStore();
 
-  const { query } = useFilterState<V>()
+  const { query } = useFilterState<V>();
 
-  const issue = useFilterIssue(group.id)
-  const issueText = issue ? filterIssueLabel(issue, actions.labels) : ""
+  const issue = useFilterIssue(group.id);
+  const issueText = issue ? filterIssueLabel(issue, actions.labels) : "";
 
-  const reorderable = useFilterReorderable()
-  const canMove = reorderable && canFilterNodeMove(query, position)
-  const rowStateStore = useFilterRowStateStore()
+  const reorderable = useFilterReorderable();
+  const canMove = reorderable && canFilterNodeMove(query, position);
+  const rowStateStore = useFilterRowStateStore();
 
-  const slot = filterCombinatorSlot(position.index)
+  const slot = filterCombinatorSlot(position.index);
   const columns = React.useMemo(() => {
-    const list: FilterColumn[] = []
-    if (slot === "toggle") list.push("combinator")
+    const list: FilterColumn[] = [];
+    if (slot === "toggle") list.push("combinator");
     // DOM order, which the arrow walker reads: a group's own controls are all
     // in its footer now, add first and the trailing pair after it.
-    list.push("add")
-    if (canMove) list.push("drag")
-    list.push("menu")
-    return list
-  }, [slot, canMove])
+    list.push("add");
+    if (canMove) list.push("drag");
+    list.push("menu");
+    return list;
+  }, [slot, canMove]);
 
   const active = useActiveColumn(
     group.id,
     columns,
-    position.depth === 1 && position.index === 0
-  )
+    position.depth === 1 && position.index === 0,
+  );
 
   const onCellFocus = React.useCallback(
     (column: FilterColumn) => () =>
       focusStore.set({ id: group.id, segment: column, autoOpen: false }),
-    [focusStore, group.id]
-  )
+    [focusStore, group.id],
+  );
 
   const description =
     group.combinator === "and"
       ? actions.labels.groupAll
-      : actions.labels.groupAny
+      : actions.labels.groupAny;
 
   const addInto = () => {
-    const id = addFilterRow(actions, group.id)
-    if (!id) return
-    rowStateStore.markPending(id)
-    focusStore.set({ id, segment: "field", autoOpen: true })
-  }
+    const id = addFilterRow(actions, group.id);
+    if (!id) return;
+    rowStateStore.markPending(id);
+    focusStore.set({ id, segment: "field", autoOpen: true });
+  };
 
   return (
     <div
@@ -1182,7 +1191,7 @@ function FilterAdvancedGroup<V, O>({
         className={cn(
           COMBINATOR_CLASS,
           CELL_BOX_CLASS,
-          GROUP_COMBINATOR_WRAP_CLASS
+          GROUP_COMBINATOR_WRAP_CLASS,
         )}
       >
         <CombinatorCell
@@ -1219,7 +1228,7 @@ function FilterAdvancedGroup<V, O>({
           className={cn(
             TRACK_CONTAINER_CLASS,
             "flex flex-col",
-            FILTER_ROW_GAP_CLASS
+            FILTER_ROW_GAP_CLASS,
           )}
         >
           {group.rules.length === 0 ? (
@@ -1230,7 +1239,7 @@ function FilterAdvancedGroup<V, O>({
                 "text-foreground/70 rounded-md border border-dashed px-2 py-3",
                 "text-center text-xs",
                 "data-drop-into:border-primary/60 data-drop-into:bg-primary/5",
-                "data-drop-into:text-primary"
+                "data-drop-into:text-primary",
               )}
               data-slot="filter-group-empty"
               data-drop-parent={group.id}
@@ -1270,7 +1279,7 @@ function FilterAdvancedGroup<V, O>({
                  the shadcn button's own base class. */
               "min-w-0 shrink font-normal",
               "overflow-hidden",
-              CELL_INVALID_CLASS
+              CELL_INVALID_CLASS,
             )}
             disabled={actions.disabled}
             {...filterReadOnlyProps(actions)}
@@ -1280,8 +1289,7 @@ function FilterAdvancedGroup<V, O>({
             onFocus={onCellFocus("add")}
             onClick={addInto}
           >
-            <PlusIcon
-            />
+            <PlusIcon />
             {actions.labels.addCondition}
           </Button>
 
@@ -1302,7 +1310,7 @@ function FilterAdvancedGroup<V, O>({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 /** A group's kebab. A menu row affords six words, where two icons said none. */
@@ -1311,21 +1319,21 @@ function FilterGroupMenu<V>({
   active,
   onFocus,
 }: {
-  group: FilterGroupNode<V>
-  active: FilterColumn | null
-  onFocus: (column: FilterColumn) => () => void
+  group: FilterGroupNode<V>;
+  active: FilterColumn | null;
+  onFocus: (column: FilterColumn) => () => void;
 }) {
-  const actions = useFilterActions()
-  const sizes = filterControlSizes(actions)
-  const locked = isFilterLocked(actions)
-  const [open, setOpen] = React.useState(false)
+  const actions = useFilterActions();
+  const sizes = filterControlSizes(actions);
+  const locked = isFilterLocked(actions);
+  const [open, setOpen] = React.useState(false);
 
   return (
     <DropdownMenu
       open={open}
       onOpenChange={(next) => {
-        if (next && locked) return
-        setOpen(next)
+        if (next && locked) return;
+        setOpen(next);
       }}
     >
       <DropdownMenuTrigger
@@ -1342,8 +1350,7 @@ function FilterGroupMenu<V>({
           />
         }
       >
-        <EllipsisVerticalIcon
-        />
+        <EllipsisVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
@@ -1383,25 +1390,25 @@ function FilterGroupMenu<V>({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
 function FilterAdvancedNode<V, O>({
   node,
   position,
 }: {
-  node: FilterNode<V>
-  position: RowPosition
+  node: FilterNode<V>;
+  position: RowPosition;
 }) {
-  const actions = useFilterActions<V, O>()
+  const actions = useFilterActions<V, O>();
 
   if (!isFilterRule(node)) {
-    return <FilterAdvancedGroup<V, O> group={node} position={position} />
+    return <FilterAdvancedGroup<V, O> group={node} position={position} />;
   }
   if (!getFilterField(actions.index, node.path)) {
-    return <FilterUnknownRow<V> rule={node} position={position} />
+    return <FilterUnknownRow<V> rule={node} position={position} />;
   }
-  return <FilterAdvancedRow<V, O> rule={node} position={position} />
+  return <FilterAdvancedRow<V, O> rule={node} position={position} />;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1412,18 +1419,18 @@ function FilterAdvancedNode<V, O>({
  * depth. `isFilterFieldPickable` is the picker's own rule. */
 function addFilterRow<V, O>(
   actions: FilterActionsContextValue<V, O>,
-  parentId?: string
+  parentId?: string,
 ): string | null {
   // Before `nextId` and before `addRule`: while the store points at a row that
   // was never created, the whole panel drops out of the tab order.
-  if (isFilterLocked(actions)) return null
+  if (isFilterLocked(actions)) return null;
 
   const entry = actions.index.all.find((candidate) =>
-    isFilterFieldPickable(candidate.field)
-  )
-  if (!entry) return null
+    isFilterFieldPickable(candidate.field),
+  );
+  if (!entry) return null;
 
-  const id = actions.nextId()
+  const id = actions.nextId();
   actions.addRule(
     createFilterRule<V>({
       id,
@@ -1432,9 +1439,9 @@ function addFilterRow<V, O>(
       // would open the next menu with its own answer highlighted.
       operator: "",
     }),
-    parentId
-  )
-  return id
+    parentId,
+  );
+  return id;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1447,13 +1454,13 @@ export interface FiltersAdvancedPanelProps {
   /** Which of the two boxes the panel sits in, the only thing deciding whether
    * it pads itself: a popover's content is `p-0`, so this padding IS its
    * inner padding, and `"inline"` is a page that owns its own. */
-  mode?: "popover" | "inline"
+  mode?: "popover" | "inline";
   /** Replaces the empty state for this panel only. Wins over
    * `Filters.renderEmpty`, the precedence a field has over the root's. */
-  renderEmpty?: (context: FilterEmptyStateContext) => React.ReactNode
+  renderEmpty?: (context: FilterEmptyStateContext) => React.ReactNode;
   /** Whether rows can be reordered. See `FiltersProps.reorderable`. */
-  reorderable?: boolean
-  className?: string
+  reorderable?: boolean;
+  className?: string;
 }
 
 /** The builder itself: nested groups over the query tree the chips read. A
@@ -1466,21 +1473,21 @@ export function FiltersAdvancedPanel<V, O>({
   reorderable = false,
   className,
 }: FiltersAdvancedPanelProps) {
-  const actions = useFilterActions<V, O>()
-  const panelRender = useFilterRender<V, O>()
-  const sizes = filterControlSizes(actions)
+  const actions = useFilterActions<V, O>();
+  const panelRender = useFilterRender<V, O>();
+  const sizes = filterControlSizes(actions);
   const { query, ruleCount, announcement, announcementSeq } =
-    useFilterState<V>()
-  const focusStore = useFilterFocusStore()
-  const rowStateStore = useFilterRowStateStore()
+    useFilterState<V>();
+  const focusStore = useFilterFocusStore();
+  const rowStateStore = useFilterRowStateStore();
   // A version counter, because the store is mutable and stable by identity.
   const rowStateVersion = React.useSyncExternalStore(
     rowStateStore.subscribe,
     () => rowStateStore.version(),
-    () => 0
-  )
-  const bodyRef = React.useRef<HTMLDivElement>(null)
-  const locked = isFilterLocked(actions)
+    () => 0,
+  );
+  const bodyRef = React.useRef<HTMLDivElement>(null);
+  const locked = isFilterLocked(actions);
 
   /* ------------------------------ validation ------------------------------ */
 
@@ -1491,21 +1498,21 @@ export function FiltersAdvancedPanel<V, O>({
       collectFilterIssues(
         query,
         (rule) => {
-          const field = getFilterField(actions.index, rule.path)
-          if (!field) return null
+          const field = getFilterField(actions.index, rule.path);
+          if (!field) return null;
           return getFilterArity(
-            getFilterOperator(actions.resolveOperators(field), rule.operator)
-          )
+            getFilterOperator(actions.resolveOperators(field), rule.operator),
+          );
         },
         // The same normalisation the display callbacks get.
         (rule) => {
-          const field = getFilterField(actions.index, rule.path)
-          if (!field?.validate) return null
+          const field = getFilterField(actions.index, rule.path);
+          if (!field?.validate) return null;
           const operator = getFilterOperator(
             actions.resolveOperators(field),
-            rule.operator
-          )
-          if (!operator) return null
+            rule.operator,
+          );
+          if (!operator) return null;
           return field.validate({
             value: rule.value,
             values:
@@ -1519,65 +1526,65 @@ export function FiltersAdvancedPanel<V, O>({
             arity: getFilterArity(operator) ?? "one",
             rule,
             labels: actions.labels,
-          })
-        }
+          });
+        },
       ),
-    [query, actions]
-  )
+    [query, actions],
+  );
 
   /** Every issue, keyed by node: what the tree IS, drawn or not. */
   const issueMap = React.useMemo(
     () => new Map(issues.map((issue) => [issue.nodeId, issue])),
-    [issues]
-  )
+    [issues],
+  );
 
   /** The issues a row may DRAW: the ones on a value committed once. */
   const visibleIssueMap = React.useMemo(() => {
-    const visible = new Map<string, FilterIssue>()
+    const visible = new Map<string, FilterIssue>();
     for (const issue of issues) {
       // CUSTOM ONLY. The built-in reasons describe a row as HALF BUILT,
       // so every Add filter produced a red row on the happy path.
-      if (issue.reason !== "custom") continue
-      if (rowStateStore.has(issue.nodeId)) visible.set(issue.nodeId, issue)
+      if (issue.reason !== "custom") continue;
+      if (rowStateStore.has(issue.nodeId)) visible.set(issue.nodeId, issue);
     }
-    return visible
-  }, [issues, rowStateStore, rowStateVersion])
+    return visible;
+  }, [issues, rowStateStore, rowStateVersion]);
 
   /** Says out loud that a VISIBLE error has appeared, which would
    * otherwise happen in silence. The DRAWN issues, on a RISE only. */
   const announcedIssues = React.useRef({
     count: visibleIssueMap.size,
     seq: announcementSeq,
-  })
+  });
   React.useEffect(() => {
-    const before = announcedIssues.current
+    const before = announcedIssues.current;
     announcedIssues.current = {
       count: visibleIssueMap.size,
       seq: announcementSeq,
-    }
-    if (announcementSeq !== before.seq) return
-    if (visibleIssueMap.size <= before.count) return
-    actions.announce(actions.labels.issueSummary(visibleIssueMap.size))
-  }, [visibleIssueMap, announcementSeq, actions])
+    };
+    if (announcementSeq !== before.seq) return;
+    if (visibleIssueMap.size <= before.count) return;
+    actions.announce(actions.labels.issueSummary(visibleIssueMap.size));
+  }, [visibleIssueMap, announcementSeq, actions]);
 
   /** Sends focus to the first thing that needs it. Walked and not selected
    * by id: a node id is consumer-supplied, and `CSS.escape` is not
    * optional in a hand-built selector. */
   const focusFirstIssue = React.useCallback(() => {
-    const first = issues[0]
-    const body = bodyRef.current
-    if (!first || !body) return
+    const first = issues[0];
+    const body = bodyRef.current;
+    if (!first || !body) return;
     const row = Array.from(
-      body.querySelectorAll<HTMLElement>(ROW_SELECTOR)
-    ).find((candidate) => candidate.dataset.nodeId === first.nodeId)
-    if (!row) return
+      body.querySelectorAll<HTMLElement>(ROW_SELECTOR),
+    ).find((candidate) => candidate.dataset.nodeId === first.nodeId);
+    if (!row) return;
     // A group's issue is drawn on the add button that resolves it.
-    const column = first.column === "group" ? "add" : first.column
+    const column = first.column === "group" ? "add" : first.column;
     const target = ownCells(row).find(
-      (cell) => cell.getAttribute(CELL_ATTRIBUTE) === column
-    )
-    target?.focus()
-  }, [issues])
+      (cell) => cell.getAttribute(CELL_ATTRIBUTE) === column,
+    );
+    target?.focus();
+  }, [issues]);
 
   /* ---------------------------- focus recovery ---------------------------- */
 
@@ -1585,8 +1592,8 @@ export function FiltersAdvancedPanel<V, O>({
    * blur WITH a `relatedTarget` is focus arriving somewhere real; a blur
    * with none, or none at all when the element is simply removed, is what
    * this exists to repair. */
-  const heldFocus = React.useRef(false)
-  const addRowRef = React.useRef<HTMLButtonElement>(null)
+  const heldFocus = React.useRef(false);
+  const addRowRef = React.useRef<HTMLButtonElement>(null);
 
   /** Puts focus back after a mutation that destroyed the thing holding it:
    * measured at 50, 200, 600 and 1200ms after Convert to group, Remove,
@@ -1595,124 +1602,124 @@ export function FiltersAdvancedPanel<V, O>({
   const restoreFocus = React.useCallback(() => {
     // A handoff is mid-air and owns focus: between one step being answered
     // and the next opening `document.activeElement` IS the body.
-    if (focusStore.getSnapshot().autoOpen) return
-    if (!heldFocus.current) return
-    const active = document.activeElement
-    if (active && active !== document.body) return
+    if (focusStore.getSnapshot().autoOpen) return;
+    if (!heldFocus.current) return;
+    const active = document.activeElement;
+    if (active && active !== document.body) return;
     const rows = Array.from(
-      bodyRef.current?.querySelectorAll<HTMLElement>(ROW_SELECTOR) ?? []
-    )
-    const { id, segment } = focusStore.getSnapshot()
+      bodyRef.current?.querySelectorAll<HTMLElement>(ROW_SELECTOR) ?? [],
+    );
+    const { id, segment } = focusStore.getSnapshot();
     const row = id
       ? rows.find((candidate) => candidate.dataset.nodeId === id)
-      : undefined
-    const cells = row ? ownCells(row) : []
+      : undefined;
+    const cells = row ? ownCells(row) : [];
     const target =
       cells.find((entry) => entry.getAttribute(CELL_ATTRIBUTE) === segment) ??
       cells[0] ??
       (rows[0] ? ownCells(rows[0])[0] : undefined) ??
       addRowRef.current ??
-      undefined
-    target?.focus()
-  }, [focusStore])
+      undefined;
+    target?.focus();
+  }, [focusStore]);
 
   // In the passive effect, not a frame later: React removes the control in
   // the mutation phase, so a menu's restore then aims at a detached node.
   React.useEffect(() => {
-    restoreFocus()
-  }, [query, announcementSeq, restoreFocus])
+    restoreFocus();
+  }, [query, announcementSeq, restoreFocus]);
 
   /* -------------------------------- adding -------------------------------- */
 
   const addRow = React.useCallback(() => {
-    const id = addFilterRow(actions)
-    if (!id) return
+    const id = addFilterRow(actions);
+    if (!id) return;
     // PENDING until the attribute is chosen, the first of three questions.
-    rowStateStore.markPending(id)
-    focusStore.set({ id, segment: "field", autoOpen: true })
-  }, [actions, focusStore, rowStateStore])
+    rowStateStore.markPending(id);
+    focusStore.set({ id, segment: "field", autoOpen: true });
+  }, [actions, focusStore, rowStateStore]);
 
   const addGroup = React.useCallback(() => {
-    const id = actions.addGroup()
+    const id = actions.addGroup();
     // An empty id means it refused, and focusing a group never created
     // would strand the tab stop.
-    if (!id) return
+    if (!id) return;
     // Onto the group's own chrome, not into it: it arrives empty.
-    focusStore.set({ id, segment: "add", autoOpen: false })
-  }, [actions, focusStore])
+    focusStore.set({ id, segment: "add", autoOpen: false });
+  }, [actions, focusStore]);
 
   /* ------------------------------- keyboard ------------------------------- */
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const cell = (event.target as HTMLElement).closest<HTMLElement>(
-      `[${CELL_ATTRIBUTE}]`
-    )
+      `[${CELL_ATTRIBUTE}]`,
+    );
     // A key pressed inside an open popover belongs to that popover; its
     // content is portaled out, so this is belt and braces.
     //
     // ArrowDown never reaches here: Base UI stops it at the menu trigger.
-    if (!cell || event.target !== cell) return
+    if (!cell || event.target !== cell) return;
 
-    const body = bodyRef.current
-    const row = cell.closest<HTMLElement>(ROW_SELECTOR)
-    if (!body || !row) return
+    const body = bodyRef.current;
+    const row = cell.closest<HTMLElement>(ROW_SELECTOR);
+    if (!body || !row) return;
 
     /* A cell the user TYPES into keeps the keys that edit text; only the
        VERTICAL keys stay. */
-    const editing = cell.hasAttribute(CELL_INPUT_ATTRIBUTE)
+    const editing = cell.hasAttribute(CELL_INPUT_ATTRIBUTE);
 
     // DOM order for the two places that mean "the whole builder".
-    const rows = Array.from(body.querySelectorAll<HTMLElement>(ROW_SELECTOR))
-    const cells = ownCells(row)
-    const rowIndex = rows.indexOf(row)
-    const cellIndex = cells.indexOf(cell)
+    const rows = Array.from(body.querySelectorAll<HTMLElement>(ROW_SELECTOR));
+    const cells = ownCells(row);
+    const rowIndex = rows.indexOf(row);
+    const cellIndex = cells.indexOf(cell);
 
-    const rtl = getComputedStyle(cell).direction === "rtl"
-    const forward = rtl ? "ArrowLeft" : "ArrowRight"
-    const backward = rtl ? "ArrowRight" : "ArrowLeft"
+    const rtl = getComputedStyle(cell).direction === "rtl";
+    const forward = rtl ? "ArrowLeft" : "ArrowRight";
+    const backward = rtl ? "ArrowRight" : "ArrowLeft";
 
     const focus = (target: HTMLElement | undefined) => {
-      if (!target) return
-      event.preventDefault()
-      target.focus()
-    }
+      if (!target) return;
+      event.preventDefault();
+      target.focus();
+    };
 
-    const from = cell.getAttribute(CELL_ATTRIBUTE) as FilterColumn
+    const from = cell.getAttribute(CELL_ATTRIBUTE) as FilterColumn;
     const band = (CONTENT_COLUMNS as readonly FilterColumn[]).includes(from)
       ? CONTENT_COLUMNS
-      : ACTION_COLUMNS
+      : ACTION_COLUMNS;
 
     /* The rows that draw a cell in this BAND, in cell order: by ROW it went
        BACKWARDS at +212, -166, +122, -76, +38 pixels once a group's own
        controls moved to its footer. */
-    const bandRows: HTMLElement[] = []
-    const seen = new Set<HTMLElement>()
+    const bandRows: HTMLElement[] = [];
+    const seen = new Set<HTMLElement>();
     for (const entry of body.querySelectorAll<HTMLElement>(
-      `[${CELL_ATTRIBUTE}]`
+      `[${CELL_ATTRIBUTE}]`,
     )) {
-      const column = entry.getAttribute(CELL_ATTRIBUTE) as FilterColumn
-      if (!(band as readonly FilterColumn[]).includes(column)) continue
-      const owner = entry.closest<HTMLElement>(ROW_SELECTOR)
-      if (!owner || seen.has(owner)) continue
-      seen.add(owner)
-      bandRows.push(owner)
+      const column = entry.getAttribute(CELL_ATTRIBUTE) as FilterColumn;
+      if (!(band as readonly FilterColumn[]).includes(column)) continue;
+      const owner = entry.closest<HTMLElement>(ROW_SELECTOR);
+      if (!owner || seen.has(owner)) continue;
+      seen.add(owner);
+      bandRows.push(owner);
     }
-    const bandIndex = bandRows.indexOf(row)
+    const bandIndex = bandRows.indexOf(row);
 
     const focusRow = (step: number) => {
-      const nextRow = bandRows[bandIndex + step]
-      if (!nextRow) return
-      const cellsThere = ownCells(nextRow)
+      const nextRow = bandRows[bandIndex + step];
+      if (!nextRow) return;
+      const cellsThere = ownCells(nextRow);
       const byColumn = new Map(
-        cellsThere.map((entry) => [entry.getAttribute(CELL_ATTRIBUTE), entry])
-      )
+        cellsThere.map((entry) => [entry.getAttribute(CELL_ATTRIBUTE), entry]),
+      );
       // The band, then anything at all, which keeps a consumer's cell
       // reachable.
-      focus(nearestColumn(band, from, byColumn) ?? cellsThere[0])
-    }
+      focus(nearestColumn(band, from, byColumn) ?? cellsThere[0]);
+    };
 
-    const nodeId = row.dataset.nodeId
-    if (!nodeId) return
+    const nodeId = row.dataset.nodeId;
+    if (!nodeId) return;
 
     // Alt reorders rather than navigates, within the owning group only:
     // changing depth with an arrow would make one gesture mean two things.
@@ -1721,41 +1728,41 @@ export function FiltersAdvancedPanel<V, O>({
       (event.key === "ArrowUp" || event.key === "ArrowDown")
     ) {
       // Plain arrows, Home and End are deliberately NOT gated.
-      if (locked || !reorderable) return
-      event.preventDefault()
-      actions.moveNode(nodeId, event.key === "ArrowDown" ? 1 : -1)
-      return
+      if (locked || !reorderable) return;
+      event.preventDefault();
+      actions.moveNode(nodeId, event.key === "ArrowDown" ? 1 : -1);
+      return;
     }
 
-    if (event.key === "ArrowDown") return focusRow(1)
-    if (event.key === "ArrowUp") return focusRow(-1)
-    if (editing) return
+    if (event.key === "ArrowDown") return focusRow(1);
+    if (event.key === "ArrowUp") return focusRow(-1);
+    if (editing) return;
 
-    if (event.key === forward) return focus(cells[cellIndex + 1])
-    if (event.key === backward) return focus(cells[cellIndex - 1])
+    if (event.key === forward) return focus(cells[cellIndex + 1]);
+    if (event.key === backward) return focus(cells[cellIndex - 1]);
     if (event.key === "Home") {
-      return focus(event.ctrlKey ? ownCells(rows[0])[0] : cells[0])
+      return focus(event.ctrlKey ? ownCells(rows[0])[0] : cells[0]);
     }
     if (event.key === "End") {
-      const scope = event.ctrlKey ? ownCells(rows[rows.length - 1]) : cells
-      return focus(scope[scope.length - 1])
+      const scope = event.ctrlKey ? ownCells(rows[rows.length - 1]) : cells;
+      return focus(scope[scope.length - 1]);
     }
 
     if (event.key === "Backspace" || event.key === "Delete") {
-      if (locked) return
-      event.preventDefault()
-      actions.removeNode(nodeId)
+      if (locked) return;
+      event.preventDefault();
+      actions.removeNode(nodeId);
       // Focus the row that takes this one's place, so removing several
       // does not throw focus to the body.
       requestAnimationFrame(() => {
         const remaining = Array.from(
-          bodyRef.current?.querySelectorAll<HTMLElement>(ROW_SELECTOR) ?? []
-        )
-        const target = remaining[Math.min(rowIndex, remaining.length - 1)]
-        if (target) ownCells(target)[0]?.focus()
-      })
+          bodyRef.current?.querySelectorAll<HTMLElement>(ROW_SELECTOR) ?? [],
+        );
+        const target = remaining[Math.min(rowIndex, remaining.length - 1)];
+        if (target) ownCells(target)[0]?.focus();
+      });
     }
-  }
+  };
 
   /* --------------------------------- drag --------------------------------- */
 
@@ -1768,10 +1775,10 @@ export function FiltersAdvancedPanel<V, O>({
     root: () => bodyRef.current?.parentElement ?? null,
     disabled: locked,
     onDrop: (nodeId, drop) => {
-      if (drop.copy) actions.copyNodeTo(nodeId, drop.parentId, drop.index)
-      else actions.moveNodeTo(nodeId, drop.parentId, drop.index)
+      if (drop.copy) actions.copyNodeTo(nodeId, drop.parentId, drop.index);
+      else actions.moveNodeTo(nodeId, drop.parentId, drop.index);
     },
-  })
+  });
 
   /* -------------------------------- render -------------------------------- */
 
@@ -1789,17 +1796,17 @@ export function FiltersAdvancedPanel<V, O>({
     "data-readonly": actions.readOnly || undefined,
     // Capture, and on the PANEL, so portaled menus report too.
     onFocusCapture: () => {
-      heldFocus.current = true
+      heldFocus.current = true;
     },
     onBlurCapture: (event: React.FocusEvent) => {
-      if (event.relatedTarget) heldFocus.current = false
+      if (event.relatedTarget) heldFocus.current = false;
     },
-  } as const
+  } as const;
 
   /** The empty state, resolved once: the panel's own prop, else the root's.
    * Assembled here so a replacement gets the SAME two actions the footer
    * calls, focus handoff included. */
-  const renderEmptyState = renderEmpty ?? panelRender.renderEmpty
+  const renderEmptyState = renderEmpty ?? panelRender.renderEmpty;
   const emptyState = renderEmptyState
     ? renderEmptyState({
         labels: actions.labels,
@@ -1808,7 +1815,7 @@ export function FiltersAdvancedPanel<V, O>({
         addFilter: addRow,
         addGroup,
       })
-    : null
+    : null;
 
   const body = (
     <>
@@ -1832,7 +1839,7 @@ export function FiltersAdvancedPanel<V, O>({
             TRACK_CONTAINER_CLASS,
             "flex min-w-0 flex-col",
             FILTER_ROW_GAP_CLASS,
-            PANEL_GUTTER_CLASS
+            PANEL_GUTTER_CLASS,
           )}
           onKeyDown={onKeyDown}
         >
@@ -1870,7 +1877,7 @@ export function FiltersAdvancedPanel<V, O>({
           data-slot="filters-advanced-empty"
           className={cn(
             "flex flex-col items-center justify-center gap-1 py-8 text-center",
-            PANEL_GUTTER_CLASS
+            PANEL_GUTTER_CLASS,
           )}
         >
           <span
@@ -1879,8 +1886,7 @@ export function FiltersAdvancedPanel<V, O>({
                style, square or round. */
             className="bg-muted text-muted-foreground mb-1 flex size-9 items-center justify-center rounded-full [&_svg]:size-4"
           >
-            <ListFilterIcon
-            />
+            <ListFilterIcon />
           </span>
           <p className="text-sm font-medium">{actions.labels.builderEmpty}</p>
           {actions.readOnly ? null : (
@@ -1911,7 +1917,7 @@ export function FiltersAdvancedPanel<V, O>({
              content back down, so the append zone TILES with the last row.
              `pt-5` and not `pt-2`: the row above already grows 4px into this
              strip, so at `pt-2` the toolbar read as the last filter's tail. */
-          query.rules.length > 0 && cn(FILTER_ROW_GAP_CANCEL_CLASS, "pt-5")
+          query.rules.length > 0 && cn(FILTER_ROW_GAP_CANCEL_CLASS, "pt-5"),
         )}
       >
         <Button
@@ -1927,8 +1933,7 @@ export function FiltersAdvancedPanel<V, O>({
           {...filterReadOnlyProps(actions)}
           onClick={addRow}
         >
-          <PlusIcon
-          />
+          <PlusIcon />
           {actions.labels.addCondition}
         </Button>
 
@@ -1940,8 +1945,7 @@ export function FiltersAdvancedPanel<V, O>({
           {...filterReadOnlyProps(actions)}
           onClick={addGroup}
         >
-          <FolderPlusIcon
-          />
+          <FolderPlusIcon />
           {actions.labels.addConditionGroup}
         </Button>
 
@@ -1967,7 +1971,7 @@ export function FiltersAdvancedPanel<V, O>({
         <span key={announcementSeq}>{announcement}</span>
       </div>
     </>
-  )
+  );
 
   return (
     <div
@@ -1984,7 +1988,7 @@ export function FiltersAdvancedPanel<V, O>({
     >
       {body}
     </div>
-  )
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1994,14 +1998,14 @@ export function FiltersAdvancedPanel<V, O>({
 export interface FiltersAdvancedProps {
   /** Where the builder lives. `"popover"` hangs it off a trigger; `"inline"`
    * renders the same panel with no popup, for a sidebar or a settings page. */
-  mode?: "popover" | "inline"
+  mode?: "popover" | "inline";
   /** Replaces the default trigger. Ignored inline. */
-  trigger?: React.ReactNode
+  trigger?: React.ReactNode;
   /** Whether rows can be reordered. See `FiltersProps.reorderable`. */
-  reorderable?: boolean
+  reorderable?: boolean;
   /** Popover placement. */
-  align?: "start" | "center" | "end"
-  className?: string
+  align?: "start" | "center" | "end";
+  className?: string;
 }
 
 export function FiltersAdvanced<V, O>({
@@ -2011,10 +2015,10 @@ export function FiltersAdvanced<V, O>({
   align = "start",
   className,
 }: FiltersAdvancedProps) {
-  const actions = useFilterActions<V, O>()
-  const sizes = filterControlSizes(actions)
-  const { ruleCount } = useFilterState<V>()
-  const [open, setOpen] = React.useState(false)
+  const actions = useFilterActions<V, O>();
+  const sizes = filterControlSizes(actions);
+  const { ruleCount } = useFilterState<V>();
+  const [open, setOpen] = React.useState(false);
 
   if (mode === "inline") {
     return (
@@ -2023,7 +2027,7 @@ export function FiltersAdvanced<V, O>({
         reorderable={reorderable}
         className={className}
       />
-    )
+    );
   }
 
   return (
@@ -2049,8 +2053,7 @@ export function FiltersAdvanced<V, O>({
                   : undefined
               }
             >
-              <ListFilterIcon
-              />
+              <ListFilterIcon />
               {actions.labels.advancedFilter}
               {ruleCount > 0 ? (
                 <span
@@ -2077,5 +2080,5 @@ export function FiltersAdvanced<V, O>({
         <FiltersAdvancedPanel<V, O> reorderable={reorderable} />
       </PopoverContent>
     </Popover>
-  )
+  );
 }

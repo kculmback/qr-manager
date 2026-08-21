@@ -1,14 +1,14 @@
 import type {
   CascaderLabels,
   CascaderMode,
-} from "@qr-manager/ui/components/reui/cascader/cascader-types"
+} from "@qr-manager/ui/components/reui/cascader/cascader-types";
 
 /** Name of the root level. Hoisted so the root announcement can reuse it. */
-const ROOT_LEVEL = "Top level"
+const ROOT_LEVEL = "Top level";
 
 /** Hoisted for the same reason: several defaults end in an item count. */
 const itemCount = (count: number) =>
-  `${count} ${count === 1 ? "item" : "items"}`
+  `${count} ${count === 1 ? "item" : "items"}`;
 
 /**
  * English defaults. Every string the primitive can render lives here, so a
@@ -46,15 +46,15 @@ export const CASCADER_LABELS: CascaderLabels = {
     // "Deeper" is the direction the text runs, so the level keys mirror in
     // RTL and the hint has to name the mirrored pair there - an LTR-worded
     // hint would teach exactly the wrong keys.
-    const open = dir === "rtl" ? "Left" : "Right"
-    const back = dir === "rtl" ? "Right" : "Left"
+    const open = dir === "rtl" ? "Left" : "Right";
+    const back = dir === "rtl" ? "Right" : "Left";
     if (mode === "tree") {
-      return `Use the ${open} Arrow key to expand and the ${back} Arrow key to collapse.`
+      return `Use the ${open} Arrow key to expand and the ${back} Arrow key to collapse.`;
     }
     if (mode === "columns") {
-      return `Use the ${open} Arrow key to open the next column and the ${back} Arrow key to go back.`
+      return `Use the ${open} Arrow key to open the next column and the ${back} Arrow key to go back.`;
     }
-    return `Use the ${open} Arrow key to open a branch and the ${back} Arrow key to go back.`
+    return `Use the ${open} Arrow key to open a branch and the ${back} Arrow key to go back.`;
   },
   rootAnnouncement: (count) => `${ROOT_LEVEL}, ${itemCount(count)}`,
   expandedAnnouncement: (label, count) =>
@@ -68,25 +68,25 @@ export const CASCADER_LABELS: CascaderLabels = {
   cascadeAnnouncement: (label, count, selecting) =>
     `${label} ${selecting ? "selected" : "deselected"}, ${itemCount(count)} followed`,
   searchingAnnouncement: "Searching...",
-}
+};
 
 /**
  * Shallow-merges consumer overrides over the defaults, so `labels` can carry a
  * single key without restating the rest.
  */
 export function resolveCascaderLabels(
-  labels?: Partial<CascaderLabels>
+  labels?: Partial<CascaderLabels>,
 ): CascaderLabels {
-  if (!labels) return CASCADER_LABELS
-  return { ...CASCADER_LABELS, ...labels }
+  if (!labels) return CASCADER_LABELS;
+  return { ...CASCADER_LABELS, ...labels };
 }
 
 /** Resolves the search placeholder, which may be a string or a function. */
 export function resolveCascaderSearchLabel(
   labels: CascaderLabels,
-  parentLabel?: string
+  parentLabel?: string,
 ): string {
   return typeof labels.search === "function"
     ? labels.search(parentLabel)
-    : labels.search
+    : labels.search;
 }
