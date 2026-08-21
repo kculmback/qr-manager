@@ -1,0 +1,41 @@
+{
+  "name": "@qr-manager/backend",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path .prettierignore",
+    "lint": "eslint --flag unstable_native_nodejs_ts_config",
+    "typecheck": "tsc --noEmit",
+    "clean": "git clean -xdf .cache dist node_modules",
+    "with-env": "dotenv -e ../../.env --"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.1",
+    "@hono/trpc-server": "^0.4.2",
+    "@qr-manager/api": "workspace:*",
+    "@qr-manager/auth": "workspace:*",
+    "@qr-manager/db": "workspace:*",
+    "@t3-oss/env-core": "catalog:",
+    "@trpc/server": "catalog:",
+    "better-auth": "catalog:",
+    "hono": "^4.13.3",
+    "superjson": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@qr-manager/eslint-config": "workspace:*",
+    "@qr-manager/prettier-config": "workspace:*",
+    "@qr-manager/tailwind-config": "workspace:*",
+    "@qr-manager/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tsx": "^4.23.0",
+    "typescript": "catalog:"
+  },
+  "prettier": "@qr-manager/prettier-config"
+}

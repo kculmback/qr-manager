@@ -1,15 +1,15 @@
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
-import { expo } from "@better-auth/expo";
+import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { oAuthProxy } from "better-auth/plugins";
 
-import { db } from "@acme/db/client";
+import type { Db } from "@qr-manager/db/client";
 
 export function initAuth<
   TExtraPlugins extends BetterAuthPlugin[] = [],
 >(options: {
   baseUrl: string;
+  db: Db;
   productionUrl: string;
   secret: string | undefined;
 
@@ -18,7 +18,7 @@ export function initAuth<
   extraPlugins?: TExtraPlugins;
 }) {
   const config = {
-    database: drizzleAdapter(db, {
+    database: drizzleAdapter(options.db, {
       provider: "pg",
     }),
     baseURL: options.baseUrl,
@@ -27,7 +27,6 @@ export function initAuth<
       oAuthProxy({
         productionURL: options.productionUrl,
       }),
-      expo(),
       ...(options.extraPlugins ?? []),
     ],
     socialProviders: {

@@ -1,5 +1,5 @@
 {
-  "name": "@acme/db",
+  "name": "@qr-manager/db",
   "private": true,
   "type": "module",
   "exports": {
@@ -29,19 +29,19 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@vercel/postgres": "^0.10.0",
-    "drizzle-orm": "^0.44.7",
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@acme/eslint-config": "workspace:*",
-    "@acme/prettier-config": "workspace:*",
-    "@acme/tsconfig": "workspace:*",
-    "drizzle-kit": "^0.31.5",
+    "@qr-manager/eslint-config": "workspace:*",
+    "@qr-manager/prettier-config": "workspace:*",
+    "@qr-manager/tsconfig": "workspace:*",
+    "drizzle-kit": "^0.31.10",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   },
-  "prettier": "@acme/prettier-config"
+  "prettier": "@qr-manager/prettier-config"
 }
