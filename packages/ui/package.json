@@ -18,7 +18,10 @@
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "class-variance-authority": "^0.7.1",
+    "cmdk": "^1.1.1",
+    "input-otp": "^1.5.0",
     "lucide-react": "catalog:",
+    "recharts": "3.8.0",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

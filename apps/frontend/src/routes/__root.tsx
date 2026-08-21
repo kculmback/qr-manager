@@ -17,6 +17,7 @@ import {
   ThemeToggle,
 } from "@qr-manager/ui/components/theme";
 import { Toaster } from "@qr-manager/ui/components/toast";
+import { TooltipProvider } from "@qr-manager/ui/components/tooltip";
 
 import appCss from "~/styles.css?url";
 
@@ -54,15 +55,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           />
         </head>
         <body className="bg-background text-foreground min-h-screen font-sans antialiased">
-          {children}
+          <TooltipProvider>
+            {children}
 
-          <div className="absolute right-4 bottom-12">
-            <ThemeToggle />
-          </div>
+            <div className="absolute right-4 bottom-12">
+              <ThemeToggle />
+            </div>
 
-          <Toaster />
-          <TanStackRouterDevtools position="bottom-right" />
-          <Scripts />
+            <Toaster />
+            <TanStackRouterDevtools position="bottom-right" />
+            <Scripts />
+          </TooltipProvider>
         </body>
       </html>
     </ThemeProvider>
