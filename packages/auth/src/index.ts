@@ -6,15 +6,17 @@ import { oAuthProxy } from "better-auth/plugins";
 import type { Db } from "@qr-manager/db/client";
 
 export function initAuth<
-  TExtraPlugins extends BetterAuthPlugin[] = [],
+  TExtraPlugins extends BetterAuthPlugin[] = BetterAuthPlugin[],
 >(options: {
   baseUrl: string;
   db: Db;
   productionUrl: string;
+  /** Origin the browser app is served from — trusted for cross-origin auth requests. */
+  frontendUrl?: string;
   secret: string | undefined;
 
-  discordClientId: string;
-  discordClientSecret: string;
+  discordClientId?: string;
+  discordClientSecret?: string;
   extraPlugins?: TExtraPlugins;
 }) {
   const config = {
@@ -30,13 +32,19 @@ export function initAuth<
       ...(options.extraPlugins ?? []),
     ],
     socialProviders: {
-      discord: {
-        clientId: options.discordClientId,
-        clientSecret: options.discordClientSecret,
-        redirectURI: `${options.productionUrl}/api/auth/callback/discord`,
-      },
+      // Only register Discord when both credentials are configured — it is
+      // optional for self-hosted deployments.
+      ...(options.discordClientId && options.discordClientSecret
+        ? {
+            discord: {
+              clientId: options.discordClientId,
+              clientSecret: options.discordClientSecret,
+              redirectURI: `${options.productionUrl}/api/auth/callback/discord`,
+            },
+          }
+        : {}),
     },
-    trustedOrigins: ["expo://"],
+    trustedOrigins: options.frontendUrl ? [options.frontendUrl] : [],
     onAPIError: {
       onError(error, ctx) {
         console.error("BETTER AUTH API ERROR", error, ctx);

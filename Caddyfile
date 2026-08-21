@@ -1,0 +1,17 @@
+# Puts the frontend and backend on a single origin. That removes CORS and
+# third-party-cookie concerns, and lets one prebuilt frontend image serve any
+# domain, because the browser calls `/api/*` relative to wherever it is loaded.
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	handle /api/* {
+		reverse_proxy backend:3000
+	}
+
+	handle {
+		reverse_proxy frontend:3001
+	}
+}

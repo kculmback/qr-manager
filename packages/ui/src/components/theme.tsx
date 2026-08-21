@@ -134,10 +134,6 @@ export function ThemeProvider({ children }: React.PropsWithChildren) {
         toggleMode,
       }}
     >
-      <script
-        dangerouslySetInnerHTML={{ __html: themeDetectorScript }}
-        suppressHydrationWarning
-      />
       {children}
     </ThemeContext>
   );
@@ -165,16 +161,10 @@ export function ThemeToggle() {
           />
         }
       >
-        <Button
-          variant="outline"
-          size="icon"
-          className="[&>svg]:absolute [&>svg]:size-5 [&>svg]:scale-0"
-        >
-          <SunIcon className="light:scale-100! auto:scale-0!" />
-          <MoonIcon className="auto:scale-0! dark:scale-100!" />
-          <ComputerIcon className="auto:scale-100!" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
+        <SunIcon className="light:scale-100! auto:scale-0!" />
+        <MoonIcon className="auto:scale-0! dark:scale-100!" />
+        <ComputerIcon className="auto:scale-100!" />
+        <span className="sr-only">Toggle theme</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setTheme("light")}>

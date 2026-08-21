@@ -13,6 +13,7 @@ export const env = createEnv({
    * This way you can ensure the app isn't built with invalid env vars.
    */
   server: {
+    /** Where server-side rendering reaches the backend; may be an internal URL. */
     BACKEND_URL: z.url(),
   },
 
@@ -21,7 +22,12 @@ export const env = createEnv({
    * For them to be exposed to the client, prefix them with `NEXT_PUBLIC_`.
    */
   client: {
-    VITE_BACKEND_URL: z.url(),
+    /**
+     * Baked into the client bundle at build time. Leave it unset when the
+     * backend is proxied under the same origin as the frontend (see
+     * `docker-compose.yml`) so one prebuilt image works on any domain.
+     */
+    VITE_BACKEND_URL: z.url().optional(),
   },
   /**
    * Destructure all variables from `process.env` to make sure they aren't tree-shaken away.

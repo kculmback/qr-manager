@@ -11,7 +11,11 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import type { AppRouter } from "@qr-manager/api";
-import { ThemeProvider, ThemeToggle } from "@qr-manager/ui/components/theme";
+import {
+  themeDetectorScript,
+  ThemeProvider,
+  ThemeToggle,
+} from "@qr-manager/ui/components/theme";
 import { Toaster } from "@qr-manager/ui/components/toast";
 
 import appCss from "~/styles.css?url";
@@ -40,6 +44,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <html lang="en" suppressHydrationWarning>
         <head>
           <HeadContent />
+          {/* Must stay in <head> and stay sync: it sets the theme class before
+              first paint. React 19 refuses to hoist a non-async script, so
+              rendering it anywhere outside the document warns and loses its
+              ordering guarantee. */}
+          <script
+            dangerouslySetInnerHTML={{ __html: themeDetectorScript }}
+            suppressHydrationWarning
+          />
         </head>
         <body className="bg-background text-foreground min-h-screen font-sans antialiased">
           {children}

@@ -10,6 +10,8 @@
  * For actual authentication usage, import from "../src/index.ts" instead.
  */
 
+import { createDb } from "@qr-manager/db/client";
+
 import { initAuth } from "../src/index";
 
 /**
@@ -19,6 +21,11 @@ import { initAuth } from "../src/index";
  * @warning Use the main auth configuration from "../src/index.ts" for your application.
  */
 export const auth = initAuth({
+  // The CLI only reads the adapter's schema config, it never opens a
+  // connection, so a placeholder connection string is enough here.
+  db: createDb(
+    process.env.POSTGRES_URL ?? "postgres://postgres@localhost:5432/postgres",
+  ),
   baseUrl: "http://localhost:3000",
   productionUrl: "http://localhost:3000",
   secret: "secret",

@@ -1,14 +1,10 @@
 {
+  "extends": "@qr-manager/tsconfig/base.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "strict": true,
-    "verbatimModuleSyntax": true,
-    "skipLibCheck": true,
     "types": ["node"],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "outDir": "./dist",
+    "jsxImportSource": "hono/jsx"
   },
-  "exclude": ["node_modules"],
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

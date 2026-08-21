@@ -3,42 +3,37 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
-import type { Auth } from "@qr-manager/auth";
-import type { Db } from "@qr-manager/db/client";
 import { appRouter, createTRPCContext } from "@qr-manager/api";
 import { createDb } from "@qr-manager/db/client";
 
 import { buildAuth } from "./auth.js";
+import { env } from "./env.js";
 
-interface Variables {
-  db: Db;
-  auth: Auth;
-}
+// Unlike the Workers runtime, this is a long-lived process: build the pool and
+// the auth instance once at startup rather than per request.
+const db = createDb(env.POSTGRES_URL);
+const auth = buildAuth(db);
 
-const app = new Hono<{ Bindings: CloudflareBindings; Variables: Variables }>();
+const app = new Hono();
 
 app.use(
   "*",
   cors({
-    origin: (_origin, c) => (c.env as CloudflareBindings).FRONTEND_URL,
+    origin: env.FRONTEND_URL,
     credentials: true,
   }),
 );
 
-app.use("*", async (c, next) => {
-  const db = createDb(c.env.POSTGRES_URL);
-  const baseUrl = new URL(c.req.url).origin;
-  const auth = buildAuth(c.env, db, baseUrl);
-  c.set("db", db);
-  c.set("auth", auth);
-  await next();
-});
+// Registered on both paths: `/health` for direct container checks, and
+// `/api/health` so it stays reachable through a proxy that only forwards /api.
+app.get("/health", (c) => c.json({ status: "ok" }));
+app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-app.on(["GET", "POST"], "/api/auth/*", (c) => c.get("auth").handler(c.req.raw));
+app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 app.all("/api/trpc/*", (c) => {
   // Clone so the body stream is independent of c.req.raw — something in the
-  // Hono/Workers/better-auth chain consumes the original before tRPC can read it.
+  // Hono/better-auth chain consumes the original before tRPC can read it.
   const req = c.req.raw.clone();
   return fetchRequestHandler({
     endpoint: "/api/trpc",
@@ -46,8 +41,8 @@ app.all("/api/trpc/*", (c) => {
     router: appRouter,
     createContext: () =>
       createTRPCContext({
-        auth: c.get("auth"),
-        db: c.get("db"),
+        auth,
+        db,
         headers: req.headers,
       }),
     onError({ error, path }) {
@@ -56,12 +51,23 @@ app.all("/api/trpc/*", (c) => {
   });
 });
 
-serve(
+const server = serve(
   {
     fetch: app.fetch,
-    port: 3000,
+    hostname: env.HOST,
+    port: env.PORT,
   },
   (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`);
+    console.log(`Server is running on http://${env.HOST}:${info.port}`);
   },
 );
+
+// Docker stops containers with SIGTERM; drain in-flight requests and close the
+// Postgres pool before exiting.
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    server.close(() => {
+      void db.$client.end().finally(() => process.exit(0));
+    });
+  });
+}

@@ -1,0 +1,25 @@
+# Build context is the repo root for both app images; keep it small so layer
+# caching stays effective.
+**/node_modules
+**/dist
+**/.output
+**/.nitro
+**/.tanstack
+**/.cache
+**/.turbo
+**/.vercel
+
+.git
+.github
+.vscode
+
+.env
+.env.*
+!.env.example
+
+**/*.log
+**/.DS_Store
+Dockerfile
+**/Dockerfile
+.dockerignore
+docker-compose*.yml

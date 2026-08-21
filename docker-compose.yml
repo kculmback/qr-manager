@@ -1,0 +1,103 @@
+# Full self-hosted stack: Postgres + backend + frontend behind a reverse proxy.
+#
+#   cp .env.example .env    # then set AUTH_SECRET
+#   docker compose up -d --build
+#
+# Everything is served from a single origin (PUBLIC_URL, default
+# http://localhost:8080). Only the proxy publishes a port; the app containers
+# and the database stay on the internal network.
+name: qr-manager
+
+x-app-env: &app-env
+  POSTGRES_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-qr_manager}
+  AUTH_SECRET: "${AUTH_SECRET:?AUTH_SECRET is required - generate one with `openssl rand -base64 32`}"
+  AUTH_DISCORD_ID: ${AUTH_DISCORD_ID:-}
+  AUTH_DISCORD_SECRET: ${AUTH_DISCORD_SECRET:-}
+  NODE_ENV: production
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-qr_manager}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-qr_manager}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Applies pending SQL migrations, then exits. The backend waits for it to
+  # finish successfully, so the schema is always current before traffic starts.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    command: ["node", "dist/migrate.js"]
+    restart: "no"
+    environment:
+      <<: *app-env
+      BACKEND_URL: ${PUBLIC_URL:-http://localhost:8080}
+      FRONTEND_URL: ${PUBLIC_URL:-http://localhost:8080}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      # Public origin, because better-auth builds OAuth callback URLs from it.
+      BACKEND_URL: ${PUBLIC_URL:-http://localhost:8080}
+      FRONTEND_URL: ${PUBLIC_URL:-http://localhost:8080}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        # Empty on purpose: the browser calls the backend on its own origin
+        # through the proxy. Set it only for a split-domain deployment.
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-}
+    restart: unless-stopped
+    environment:
+      # Server-side rendering talks to the backend directly over the internal
+      # network, skipping a round trip back out through the proxy.
+      BACKEND_URL: http://backend:3000
+      NODE_ENV: production
+    depends_on:
+      - backend
+
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${PUBLIC_PORT:-8080}:8080"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

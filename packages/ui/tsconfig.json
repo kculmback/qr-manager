@@ -6,9 +6,9 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@siplist/ui/*": ["./src/*"],
-    },
+      "@qr-manager/ui/*": ["./src/*"]
+    }
   },
   "include": ["src"],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules"]
 }
