@@ -1,11 +1,11 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "base-luma",
+  "style": "base-lyra",
   "rsc": true,
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "unused.css",
+    "css": "src/styles/globals.css",
     "baseColor": "mist",
     "cssVariables": true
   },
@@ -19,5 +19,8 @@
   },
   "rtl": false,
   "menuColor": "default",
-  "menuAccent": "subtle"
+  "menuAccent": "subtle",
+  "registries": {
+    "@reui": "https://reui.io/r/{style}/{name}.json"
+  }
 }

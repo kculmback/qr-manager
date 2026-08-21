@@ -1,5 +1,0 @@
-{
-  "extends": "@qr-manager/tsconfig/base.json",
-  "include": ["."],
-  "exclude": ["node_modules"]
-}

@@ -19,7 +19,7 @@ import {
 import { Toaster } from "@qr-manager/ui/components/toast";
 import { TooltipProvider } from "@qr-manager/ui/components/tooltip";
 
-import appCss from "~/styles.css?url";
+import appCss from "@qr-manager/ui/globals.css?url";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;

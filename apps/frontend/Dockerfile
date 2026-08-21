@@ -23,7 +23,6 @@ COPY packages/validators/package.json packages/validators/
 COPY tooling/eslint/package.json tooling/eslint/
 COPY tooling/github/package.json tooling/github/
 COPY tooling/prettier/package.json tooling/prettier/
-COPY tooling/tailwind/package.json tooling/tailwind/
 COPY tooling/typescript/package.json tooling/typescript/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --ignore-scripts

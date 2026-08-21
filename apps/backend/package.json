@@ -30,7 +30,6 @@
   "devDependencies": {
     "@qr-manager/eslint-config": "workspace:*",
     "@qr-manager/prettier-config": "workspace:*",
-    "@qr-manager/tailwind-config": "workspace:*",
     "@qr-manager/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
