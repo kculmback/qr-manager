@@ -1,37 +1,33 @@
-"use client"
+"use client";
 
-import {
-  type AuthSocialProvider,
-  getProviderId,
-  getProviderName
-} from "@better-auth-ui/core"
+import type { AuthSocialProvider } from "@better-auth-ui/core";
+import type { Account } from "better-auth";
+import { getProviderId, getProviderName } from "@better-auth-ui/core";
 import {
   renderProviderIcon,
   useAccountInfo,
   useAuth,
   useLinkSocial,
-  useUnlinkAccount
-} from "@better-auth-ui/react"
-import type { Account } from "better-auth"
-import { Link2, Link2Off, Plug } from "lucide-react"
-import { toast } from "sonner"
+  useUnlinkAccount,
+} from "@better-auth-ui/react";
+import { Link2, Link2Off, Plug } from "lucide-react";
 
-import { Button } from "@qr-manager/ui/components/button"
+import { Button } from "@qr-manager/ui/components/button";
 import {
   Item,
   ItemActions,
   ItemContent,
   ItemDescription,
   ItemMedia,
-  ItemTitle
-} from "@qr-manager/ui/components/item"
-import { Skeleton } from "@qr-manager/ui/components/skeleton"
-import { Spinner } from "@qr-manager/ui/components/spinner"
-import { cn } from "@qr-manager/ui/lib/utils"
+  ItemTitle,
+} from "@qr-manager/ui/components/item";
+import { Skeleton } from "@qr-manager/ui/components/skeleton";
+import { Spinner } from "@qr-manager/ui/components/spinner";
+import { cn } from "@qr-manager/ui/lib/utils";
 
-export type LinkedAccountProps = {
-  account?: Account
-  provider: AuthSocialProvider | string
+export interface LinkedAccountProps {
+  account?: Account;
+  provider: AuthSocialProvider | string;
 }
 
 /**
@@ -45,35 +41,40 @@ export type LinkedAccountProps = {
  * @returns A JSX element containing the linked account row
  */
 export function LinkedAccount({ account, provider }: LinkedAccountProps) {
-  const { authClient, baseURL, localization } = useAuth()
+  const { authClient, baseURL, localization } = useAuth();
 
   const { data: accountInfo, isPending: isLoadingInfo } = useAccountInfo(
     authClient,
-    { query: { accountId: account?.id ?? "" } }
-  )
+    { query: { accountId: account?.id ?? "" } },
+  );
 
-  const { mutate: linkSocial, isPending: isLinking } = useLinkSocial(authClient)
+  const { mutate: linkSocial, isPending: isLinking } =
+    useLinkSocial(authClient);
 
   const { mutate: unlinkAccount, isPending: isUnlinking } = useUnlinkAccount(
     authClient,
     {
-      onSuccess: () => toast.success(localization.settings.accountUnlinked)
-    }
-  )
+      onSuccess: () =>
+        toast.add({
+          type: "success",
+          title: localization.settings.accountUnlinked,
+        }),
+    },
+  );
 
-  const providerId = getProviderId(provider)
-  const providerIcon = renderProviderIcon(provider)
-  const providerName = getProviderName(provider)
+  const providerId = getProviderId(provider);
+  const providerIcon = renderProviderIcon(provider);
+  const providerName = getProviderName(provider);
   const accountData = accountInfo?.data as
     | { login?: string; username?: string }
-    | undefined
+    | undefined;
 
   const displayName =
     accountData?.login ||
     accountData?.username ||
     accountInfo?.user?.email ||
     accountInfo?.user?.name ||
-    account?.accountId
+    account?.accountId;
 
   return (
     <Item>
@@ -90,7 +91,7 @@ export function LinkedAccount({ account, provider }: LinkedAccountProps) {
               ? displayName
               : localization.settings.linkProvider.replace(
                   "{{provider}}",
-                  providerName
+                  providerName,
                 )}
           </ItemDescription>
         )}
@@ -104,7 +105,7 @@ export function LinkedAccount({ account, provider }: LinkedAccountProps) {
             disabled={isUnlinking}
             aria-label={localization.settings.unlinkProvider.replace(
               "{{provider}}",
-              providerName
+              providerName,
             )}
           >
             {isUnlinking ? <Spinner /> : <Link2Off />}
@@ -119,13 +120,13 @@ export function LinkedAccount({ account, provider }: LinkedAccountProps) {
             onClick={() =>
               linkSocial({
                 provider: providerId,
-                callbackURL: `${baseURL}${window.location.pathname}`
+                callbackURL: `${baseURL}${window.location.pathname}`,
               })
             }
             disabled={isLinking}
             aria-label={localization.settings.linkProvider.replace(
               "{{provider}}",
-              providerName
+              providerName,
             )}
           >
             {isLinking ? <Spinner /> : <Link2 />}
@@ -134,5 +135,5 @@ export function LinkedAccount({ account, provider }: LinkedAccountProps) {
         )}
       </ItemActions>
     </Item>
-  )
+  );
 }

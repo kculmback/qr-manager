@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import {
-  type AdditionalFieldValue,
-  parseAdditionalFieldValue
-} from "@better-auth-ui/core"
-import type { UsernameAuthClient } from "@better-auth-ui/core/plugins/username"
-import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react"
-import { type SyntheticEvent, useState } from "react"
-import { toast } from "sonner"
+import type { AdditionalFieldValue } from "@better-auth-ui/core";
+import type { UsernameAuthClient } from "@better-auth-ui/core/plugins/username";
+import type { SyntheticEvent } from "react";
+import { useState } from "react";
+import { parseAdditionalFieldValue } from "@better-auth-ui/core";
+import { useAuth, useSession, useUpdateUser } from "@better-auth-ui/react";
 
-import { Button } from "@qr-manager/ui/components/button"
-import { Card, CardContent, CardFooter } from "@qr-manager/ui/components/card"
-import { Field, FieldError, FieldLabel } from "@qr-manager/ui/components/field"
-import { Input } from "@qr-manager/ui/components/input"
-import { Skeleton } from "@qr-manager/ui/components/skeleton"
-import { Spinner } from "@qr-manager/ui/components/spinner"
-import { cn } from "@qr-manager/ui/lib/utils"
-import { AdditionalField } from "../../additional-field"
-import { ChangeAvatar } from "./change-avatar"
+import { Button } from "@qr-manager/ui/components/button";
+import { Card, CardContent, CardFooter } from "@qr-manager/ui/components/card";
+import { Field, FieldError, FieldLabel } from "@qr-manager/ui/components/field";
+import { Input } from "@qr-manager/ui/components/input";
+import { Skeleton } from "@qr-manager/ui/components/skeleton";
+import { Spinner } from "@qr-manager/ui/components/spinner";
+import { toast } from "@qr-manager/ui/components/toast";
+import { cn } from "@qr-manager/ui/lib/utils";
 
-export type UserProfileProps = {
-  className?: string
+import { AdditionalField } from "../../additional-field";
+import { ChangeAvatar } from "./change-avatar";
+
+export interface UserProfileProps {
+  className?: string;
 }
 
 /**
@@ -31,56 +31,63 @@ export type UserProfileProps = {
  */
 export function UserProfile({ className }: UserProfileProps) {
   const { additionalFields, authClient, localization } =
-    useAuth<UsernameAuthClient>()
-  const { data: session } = useSession(authClient)
+    useAuth<UsernameAuthClient>();
+  const { data: session } = useSession(authClient);
 
   const { mutate: updateUser, isPending } = useUpdateUser(authClient, {
-    onSuccess: () => toast.success(localization.settings.profileUpdatedSuccess)
-  })
+    onSuccess: () =>
+      toast.add({
+        type: "success",
+        title: localization.settings.profileUpdatedSuccess,
+      }),
+  });
 
   const [fieldErrors, setFieldErrors] = useState<{
-    name?: string
-  }>({})
+    name?: string;
+  }>({});
 
   async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault()
+    e.preventDefault();
 
-    const formData = new FormData(e.currentTarget)
-    const name = formData.get("name") as string
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
 
-    const additionalFieldValues: Record<string, unknown> = {}
+    const additionalFieldValues: Record<string, unknown> = {};
 
     for (const field of additionalFields ?? []) {
-      if (field.profile === false || field.readOnly) continue
+      if (field.profile === false || field.readOnly) continue;
       const value = parseAdditionalFieldValue(
         field,
-        formData.get(field.name) as string | null
-      )
+        formData.get(field.name) as string | null,
+      );
 
       if (field.validate) {
         try {
-          await field.validate(value)
+          await field.validate(value);
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : String(error))
-          return
+          toast.add({
+            type: "error",
+            title: error instanceof Error ? error.message : String(error),
+          });
+          return;
         }
       }
 
       // `null` = explicit clear (forward to backend); `undefined` = omitted.
       if (value !== undefined) {
-        additionalFieldValues[field.name] = value
+        additionalFieldValues[field.name] = value;
       }
     }
 
     updateUser({
       name,
-      ...additionalFieldValues
-    })
+      ...additionalFieldValues,
+    });
   }
 
   return (
     <div>
-      <h2 className="text-sm font-semibold mb-3">
+      <h2 className="mb-3 text-sm font-semibold">
         {localization.settings.userProfile}
       </h2>
 
@@ -105,16 +112,16 @@ export function UserProfile({ className }: UserProfileProps) {
                   onChange={() => {
                     setFieldErrors((prev) => ({
                       ...prev,
-                      name: undefined
-                    }))
+                      name: undefined,
+                    }));
                   }}
                   onInvalid={(e) => {
-                    e.preventDefault()
+                    e.preventDefault();
 
                     setFieldErrors((prev) => ({
                       ...prev,
-                      name: (e.target as HTMLInputElement).validationMessage
-                    }))
+                      name: (e.target as HTMLInputElement).validationMessage,
+                    }));
                   }}
                   aria-invalid={!!fieldErrors.name}
                 />
@@ -128,23 +135,23 @@ export function UserProfile({ className }: UserProfileProps) {
             </Field>
 
             {additionalFields?.map((field) => {
-              if (field.profile === false) return null
+              if (field.profile === false) return null;
 
               if (!session) {
                 if (field.inputType === "hidden") {
-                  return null
+                  return null;
                 }
 
                 return (
                   <Skeleton key={field.name}>
                     <Input className="invisible" />
                   </Skeleton>
-                )
+                );
               }
 
               const value = (session.user as Record<string, unknown>)[
                 field.name
-              ]
+              ];
 
               // Re-mount when the session value loads so the field's
               // uncontrolled `defaultValue` reflects the latest data.
@@ -152,7 +159,7 @@ export function UserProfile({ className }: UserProfileProps) {
                 value instanceof Date
                   ? value.toISOString()
                   : String(value ?? "")
-              }`
+              }`;
 
               return (
                 <AdditionalField
@@ -162,11 +169,11 @@ export function UserProfile({ className }: UserProfileProps) {
                     ...field,
                     // `defaultValue` is sign-up-only; on the profile we
                     // always seed from the session.
-                    defaultValue: value as AdditionalFieldValue | null
+                    defaultValue: value as AdditionalFieldValue | null,
                   }}
                   isPending={isPending}
                 />
-              )
+              );
             })}
           </CardContent>
 
@@ -180,5 +187,5 @@ export function UserProfile({ className }: UserProfileProps) {
         </Card>
       </form>
     </div>
-  )
+  );
 }
