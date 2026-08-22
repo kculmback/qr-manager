@@ -1,0 +1,69 @@
+/* design-sync stylesheet entry.
+ *
+ * The DS's own source of truth is packages/ui/src/styles/globals.css (Tailwind
+ * v4 source: tokens, dark theme, @source globs over packages/ui + apps).
+ * Compiling that alone yields only the utility classes THIS repo happens to
+ * use — but the claude.ai/design agent writes new layout markup with the same
+ * utility vocabulary, so anything unused here would render unstyled in every
+ * design. The @source inline() safelist below pre-generates the standard
+ * layout / spacing / sizing / typography / color vocabulary so agent-authored
+ * markup is styled. Keep it in sync with the token list in globals.css.
+ */
+@import "../packages/ui/src/styles/globals.css";
+
+/* Preview cards are compiled outside the package's @source globs, so scan them
+ * explicitly — otherwise a utility used only in a preview renders unstyled. */
+@source "./previews/*.tsx";
+
+/* ── semantic color tokens × the properties that consume them ───────────── */
+@source inline("{hover:,focus:,focus-visible:,dark:,}{bg,text,border,ring,fill,stroke,divide,outline,decoration}-{background,foreground,card,card-foreground,popover,popover-foreground,primary,primary-foreground,secondary,secondary-foreground,muted,muted-foreground,accent,accent-foreground,destructive,destructive-foreground,success,success-foreground,warning,warning-foreground,info,info-foreground,invert,invert-foreground,border,input,ring,sidebar,sidebar-foreground,sidebar-primary,sidebar-primary-foreground,sidebar-accent,sidebar-accent-foreground,sidebar-border,sidebar-ring,chart-1,chart-2,chart-3,chart-4,chart-5,transparent,current,white,black}");
+@source inline("{hover:,dark:,}{bg,text,border}-{primary,secondary,muted,accent,destructive,success,warning,info,card,popover,sidebar}/{5,10,20,30,40,50,60,70,80,90}");
+
+/* ── spacing ───────────────────────────────────────────────────────────── */
+@source inline("{sm:,md:,lg:,}{p,px,py,pt,pr,pb,pl,m,mx,my,mt,mr,mb,ml,gap,gap-x,gap-y,space-x,space-y}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,11,12,14,16,20,24,32}");
+@source inline("{sm:,md:,lg:,}{mx,my,mt,mb,ml,mr,m}-auto");
+@source inline("{sm:,md:,lg:,}-{mt,mb,ml,mr,mx,my}-{1,2,3,4,6,8}");
+
+/* ── sizing ────────────────────────────────────────────────────────────── */
+@source inline("{sm:,md:,lg:,}{w,h,min-w,min-h,max-w,max-h,size}-{0,1,2,3,4,5,6,7,8,9,10,11,12,14,16,20,24,32,40,48,56,64,72,80,96,px,auto,full,screen,min,max,fit,dvh,dvw}");
+@source inline("{sm:,md:,lg:,}w-{1/2,1/3,2/3,1/4,3/4,1/5,2/5,3/5,4/5,1/6,5/6}");
+@source inline("{sm:,md:,lg:,}max-w-{3xs,2xs,xs,sm,md,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,none,prose}");
+
+/* ── layout ────────────────────────────────────────────────────────────── */
+@source inline("{sm:,md:,lg:,}{block,inline-block,inline,flex,inline-flex,grid,inline-grid,table,hidden,contents,flow-root}");
+@source inline("{sm:,md:,lg:,}flex-{row,row-reverse,col,col-reverse,wrap,wrap-reverse,nowrap,1,auto,initial,none}");
+@source inline("{sm:,md:,lg:,}{items,justify,content,self,place-items,place-content}-{start,center,end,between,around,evenly,stretch,baseline,auto,normal}");
+@source inline("{sm:,md:,lg:,}{shrink,grow}-{0,}");
+@source inline("{sm:,md:,lg:,}{grid-cols,grid-rows}-{1,2,3,4,5,6,7,8,9,10,11,12,none}");
+@source inline("{sm:,md:,lg:,}{col-span,row-span}-{1,2,3,4,5,6,7,8,9,10,11,12,full}");
+@source inline("{sm:,md:,lg:,}{relative,absolute,fixed,sticky,static,isolate}");
+@source inline("{inset,inset-x,inset-y,top,right,bottom,left}-{0,1,2,3,4,6,8,auto,px,full,1/2}");
+@source inline("z-{0,10,20,30,40,50,auto}");
+@source inline("{sm:,md:,lg:,}{overflow,overflow-x,overflow-y}-{auto,hidden,scroll,visible,clip}");
+@source inline("{order,basis}-{0,1,2,3,4,5,6,auto,full,first,last,none}");
+
+/* ── typography ────────────────────────────────────────────────────────── */
+@source inline("{sm:,md:,lg:,}text-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl}");
+@source inline("{sm:,md:,lg:,}text-{left,center,right,justify,start,end}");
+@source inline("font-{thin,extralight,light,normal,medium,semibold,bold,extrabold,black,sans,mono,heading}");
+@source inline("{leading,tracking}-{none,tight,tighter,snug,normal,relaxed,loose,wide,wider,widest}");
+@source inline("{truncate,italic,not-italic,underline,line-through,no-underline,uppercase,lowercase,capitalize,normal-case,text-balance,text-pretty,text-nowrap,text-wrap,whitespace-nowrap,whitespace-pre-line,break-words,break-all,tabular-nums}");
+@source inline("line-clamp-{1,2,3,4,5,6,none}");
+@source inline("list-{none,disc,decimal,inside,outside}");
+
+/* ── borders, radius, elevation ────────────────────────────────────────── */
+@source inline("{border,border-x,border-y,border-t,border-r,border-b,border-l,divide-x,divide-y,ring,ring-offset}-{0,1,2,4,8,}");
+@source inline("rounded-{none,xs,sm,md,lg,xl,2xl,3xl,4xl,full}");
+@source inline("rounded-{t,r,b,l,tl,tr,bl,br}-{none,sm,md,lg,xl,2xl,3xl,full}");
+@source inline("{hover:,dark:,}shadow-{2xs,xs,sm,md,lg,xl,2xl,none,inner}");
+@source inline("{border-solid,border-dashed,border-dotted,border-none}");
+
+/* ── effects & interaction ─────────────────────────────────────────────── */
+@source inline("{hover:,focus:,disabled:,group-hover:,dark:,}opacity-{0,5,10,20,25,30,40,50,60,70,75,80,90,95,100}");
+@source inline("{transition,transition-all,transition-colors,transition-opacity,transition-transform,transition-shadow,transition-none}");
+@source inline("duration-{75,100,150,200,300,500,700,1000} ease-{linear,in,out,in-out} delay-{75,100,150,200,300,500}");
+@source inline("{cursor-pointer,cursor-default,cursor-not-allowed,cursor-text,cursor-wait,select-none,select-text,pointer-events-none,pointer-events-auto}");
+@source inline("{hover:,}{scale,rotate,translate-x,translate-y}-{0,1,2,3,4,90,95,100,105,110,180}");
+@source inline("{object-cover,object-contain,object-fill,object-center,aspect-square,aspect-video,aspect-auto}");
+@source inline("{sr-only,not-sr-only,antialiased,backdrop-blur,backdrop-blur-sm,blur,blur-sm,animate-spin,animate-pulse,animate-bounce}");
+@source inline("{sm:,md:,lg:,}{container,mx-auto}");

@@ -1,0 +1,106 @@
+{
+  "shape": "package",
+  "projectId": "be90c315-921e-4dcf-9df8-a1c1e1c80c4f",
+  "pkg": "@qr-manager/ui",
+  "globalName": "QrManagerUI",
+  "buildCmd": "node .design-sync/build-dist.mjs",
+  "tsconfig": "./tsconfig.json",
+  "cssEntry": "./ds-dist/styles.css",
+  "libOverrides": {
+    "dts.mjs": "shadcn flat subpart exports have no compounds namespace \u2014 fold them by declaring file / directory primary",
+    "source-kit.mjs": "group by doc category for the vendored reui/ subtree instead of its directory name"
+  },
+  "provider": {
+    "component": "ThemeProvider",
+    "inner": {
+      "component": "TooltipProvider"
+    }
+  },
+  "overrides": {
+    "Field": {
+      "cardMode": "column"
+    },
+    "AlertDialog": {
+      "cardMode": "single",
+      "primaryStory": "DeleteCode"
+    },
+    "Dialog": {
+      "cardMode": "single",
+      "primaryStory": "CreateCode"
+    },
+    "Popover": {
+      "cardMode": "single",
+      "primaryStory": "ScanDetails"
+    },
+    "Tooltip": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "DropdownMenu": {
+      "cardMode": "single",
+      "primaryStory": "RowActions"
+    },
+    "ContextMenu": {
+      "cardMode": "single",
+      "primaryStory": "CodeActions"
+    },
+    "HoverCard": {
+      "cardMode": "single",
+      "primaryStory": "CodePreview"
+    },
+    "Select": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "Combobox": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "Progress": {
+      "cardMode": "single",
+      "primaryStory": "WithLabel"
+    },
+    "Switch": {
+      "cardMode": "column"
+    },
+    "Collapsible": {
+      "cardMode": "column"
+    },
+    "Cascader": {
+      "cardMode": "column"
+    },
+    "Filters": {
+      "cardMode": "column"
+    },
+    "Sheet": {
+      "cardMode": "single",
+      "primaryStory": "EditPanel",
+      "viewport": "900x560"
+    },
+    "Drawer": {
+      "cardMode": "single",
+      "primaryStory": "Basic",
+      "viewport": "720x380"
+    },
+    "Sidebar": {
+      "cardMode": "single",
+      "primaryStory": "Navigation",
+      "viewport": "420x480"
+    },
+    "Toast": {
+      "cardMode": "single",
+      "primaryStory": "Success",
+      "viewport": "520x260"
+    },
+    "Toaster": {
+      "cardMode": "single",
+      "primaryStory": "Stacked",
+      "viewport": "520x320"
+    }
+  },
+  "docsDir": "../../.design-sync/docs",
+  "readmeHeader": ".design-sync/conventions.md",
+  "extraEntries": [
+    "recharts"
+  ]
+}
