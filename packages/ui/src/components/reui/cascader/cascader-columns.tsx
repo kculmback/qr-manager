@@ -1,15 +1,18 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
+import { Combobox as ComboboxPrimitive } from "@base-ui/react";
+import { LoaderCircleIcon } from "lucide-react";
+
+import type { CascaderColumn } from "@qr-manager/ui/components/reui/cascader/cascader-context";
 import {
   useCascaderActions,
   useCascaderState,
-} from "@qr-manager/ui/components/reui/cascader/cascader-context"
-import type { CascaderColumn } from "@qr-manager/ui/components/reui/cascader/cascader-context"
+} from "@qr-manager/ui/components/reui/cascader/cascader-context";
 import {
   CascaderItem,
   getCascaderMoreProps,
-} from "@qr-manager/ui/components/reui/cascader/cascader-item"
+} from "@qr-manager/ui/components/reui/cascader/cascader-item";
 import {
   CASCADER_LIST_HEIGHT_CLASS,
   CASCADER_LIST_PAD_CLASS,
@@ -17,23 +20,18 @@ import {
   CASCADER_ROWS_CLASS,
   CASCADER_SCROLL_CLASS,
   warnCascaderOnce,
-} from "@qr-manager/ui/components/reui/cascader/cascader-lib"
-import { Combobox as ComboboxPrimitive } from "@base-ui/react"
+} from "@qr-manager/ui/components/reui/cascader/cascader-lib";
+import { ScrollArea } from "@qr-manager/ui/components/scroll-area";
+import { cn } from "@qr-manager/ui/lib/utils";
 
-import { cn } from "@qr-manager/ui/lib/utils"
-import { ScrollArea } from "@qr-manager/ui/components/scroll-area"
-import { LoaderCircleIcon } from "lucide-react"
-
-export interface CascaderColumnsProps extends Omit<
-  React.ComponentProps<"div">,
-  "children"
-> {
+export interface CascaderColumnsProps
+  extends Omit<React.ComponentProps<"div">, "children"> {
   /** Width of each column. */
-  columnWidth?: number | string
+  columnWidth?: number | string;
   /** Height CAP per column. Falls back to the root `maxHeight`, then 24rem. */
-  maxHeight?: number | string
+  maxHeight?: number | string;
   /** Replaces the default panel; the seam a windowed column plugs into. */
-  children?: (column: CascaderColumn) => React.ReactNode
+  children?: (column: CascaderColumn) => React.ReactNode;
 }
 
 /**
@@ -49,24 +47,24 @@ function CascaderColumns({
   children,
   ...props
 }: CascaderColumnsProps) {
-  const { maxHeight, mode, labels } = useCascaderActions()
-  const { columns } = useCascaderState()
+  const { maxHeight, mode, labels } = useCascaderActions();
+  const { columns } = useCascaderState();
 
   // Before the early return, so the hook count is the same in both modes.
   React.useEffect(() => {
-    if (process.env.NODE_ENV === "production") return
-    if (mode === "columns") return
+    if (process.env.NODE_ENV === "production") return;
+    if (mode === "columns") return;
     warnCascaderOnce(
       `columns-outside-columns-mode:${mode}`,
-      `\`CascaderColumns\` renders nothing in \`mode="${mode}"\`, so \`columnWidth\` and everything else on it does nothing. Set \`mode="columns"\` on the root, or render \`CascaderList\` instead.`
-    )
-  }, [mode])
+      `\`CascaderColumns\` renders nothing in \`mode="${mode}"\`, so \`columnWidth\` and everything else on it does nothing. Set \`mode="columns"\` on the root, or render \`CascaderList\` instead.`,
+    );
+  }, [mode]);
 
-  if (mode !== "columns") return null
+  if (mode !== "columns") return null;
 
-  const height = maxHeightProp ?? maxHeight
+  const height = maxHeightProp ?? maxHeight;
   const toCss = (value: number | string) =>
-    typeof value === "number" ? `${value}px` : value
+    typeof value === "number" ? `${value}px` : value;
 
   return (
     <div
@@ -89,7 +87,7 @@ function CascaderColumns({
            child, and the columns inside it size against this box. */
         "flex max-h-full min-h-0 items-stretch overflow-x-auto overscroll-x-contain",
         CASCADER_LIST_PAD_CLASS,
-        className
+        className,
       )}
       {...props}
     >
@@ -98,10 +96,10 @@ function CascaderColumns({
           <React.Fragment key={column.depth}>{children(column)}</React.Fragment>
         ) : (
           <CascaderColumnPanel key={column.depth} column={column} />
-        )
+        ),
       )}
     </div>
-  )
+  );
 }
 
 /**
@@ -111,14 +109,14 @@ function CascaderColumns({
  * is also the BOUND, the same `min(--available-height, cap)` the single list
  * uses, and the `ScrollArea` inside scrolls, so every column shows a thumb.
  */
-const PANEL_CLASS = `flex w-(--cascader-column-width) shrink-0 flex-col overscroll-contain not-first:w-[calc(var(--cascader-column-width)_+_1px)] not-first:border-border/60 not-first:border-s ${CASCADER_LIST_HEIGHT_CLASS}`
+const PANEL_CLASS = `flex w-(--cascader-column-width) shrink-0 flex-col overscroll-contain not-first:w-[calc(var(--cascader-column-width)_+_1px)] not-first:border-border/60 not-first:border-s ${CASCADER_LIST_HEIGHT_CLASS}`;
 
 export interface CascaderColumnPanelProps {
-  column: CascaderColumn
+  column: CascaderColumn;
   /** Replaces the panel's rows; the empty state still wins on an empty column. */
-  children?: React.ReactNode
+  children?: React.ReactNode;
   /** Containing block for the windowed column's absolutely positioned rows. */
-  virtualized?: boolean
+  virtualized?: boolean;
 }
 
 function CascaderColumnPanel({
@@ -134,14 +132,14 @@ function CascaderColumnPanel({
     isSelected,
     isIndeterminate,
     retryLevel,
-  } = useCascaderActions()
-  const { loadStates } = useCascaderState()
+  } = useCascaderActions();
+  const { loadStates } = useCascaderState();
 
   // Keyed per level, not one global flag: columns load and land independently.
-  const columnKey = column.parent?.value ?? CASCADER_ROOT_KEY
-  const loadState = loadStates.get(columnKey)
+  const columnKey = column.parent?.value ?? CASCADER_ROOT_KEY;
+  const loadState = loadStates.get(columnKey);
 
-  let emptyBody: React.ReactNode = labels.empty
+  let emptyBody: React.ReactNode = labels.empty;
   if (loadState?.error) {
     emptyBody = (
       <>
@@ -155,14 +153,14 @@ function CascaderColumnPanel({
           {labels.retry}
         </button>
       </>
-    )
+    );
   } else if (loadState?.loading) {
     emptyBody = (
       <span className="flex items-center gap-1.5">
         <LoaderCircleIcon className="size-3.5 animate-spin" aria-hidden />
         {labels.loading}
       </span>
-    )
+    );
   }
 
   const rows =
@@ -179,7 +177,7 @@ function CascaderColumnPanel({
     ) : (
       (children ??
       column.items.map((node, i) => {
-        const open = node.value === column.activeValue
+        const open = node.value === column.activeValue;
         return (
           <CascaderItem
             key={node.value}
@@ -209,9 +207,9 @@ function CascaderColumnPanel({
                 }
               : null)}
           />
-        )
+        );
       }))
-    )
+    );
 
   const shared = {
     "data-slot": "cascader-column",
@@ -224,12 +222,12 @@ function CascaderColumnPanel({
     // Conditional spread, never an explicit `undefined`: the active column is a
     // Base UI element, and its `mergeProps` iterates own keys.
     ...(virtualized ? { "data-virtualized": true } : null),
-  }
+  };
 
   // A windowed row is absolutely positioned, so the ROWS' box is the containing
   // block, not the scrollport: it carries the padding the geometry is measured
   // against.
-  const rowsClass = cn(CASCADER_ROWS_CLASS, virtualized && "relative")
+  const rowsClass = cn(CASCADER_ROWS_CLASS, virtualized && "relative");
 
   // The active column IS the Combobox list: only rows inside `Combobox.List`
   // reach the CompositeList, arrow-key navigation and `aria-activedescendant`.
@@ -242,7 +240,7 @@ function CascaderColumnPanel({
     <div {...shared} role="group" className={rowsClass}>
       {rows}
     </div>
-  )
+  );
 
   return (
     <div
@@ -257,7 +255,7 @@ function CascaderColumnPanel({
     >
       <ScrollArea className={CASCADER_SCROLL_CLASS}>{body}</ScrollArea>
     </div>
-  )
+  );
 }
 
-export { CascaderColumnPanel, CascaderColumns }
+export { CascaderColumnPanel, CascaderColumns };

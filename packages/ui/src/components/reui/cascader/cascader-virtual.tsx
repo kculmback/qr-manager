@@ -1,24 +1,21 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { CascaderColumnPanel } from "@qr-manager/ui/components/reui/cascader/cascader-columns"
+import type { Range, Virtualizer } from "@tanstack/react-virtual";
+import * as React from "react";
+import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
+
+import type { CascaderColumn } from "@qr-manager/ui/components/reui/cascader/cascader-context";
+import { CascaderColumnPanel } from "@qr-manager/ui/components/reui/cascader/cascader-columns";
 import {
   useCascaderActions,
   useCascaderHighlight,
   useCascaderState,
-} from "@qr-manager/ui/components/reui/cascader/cascader-context"
-import type { CascaderColumn } from "@qr-manager/ui/components/reui/cascader/cascader-context"
+} from "@qr-manager/ui/components/reui/cascader/cascader-context";
 import {
   CascaderItem,
   CascaderItems,
   getCascaderMoreProps,
-} from "@qr-manager/ui/components/reui/cascader/cascader-item"
-import {
-  defaultRangeExtractor,
-  useVirtualizer,
-  type Range,
-  type Virtualizer,
-} from "@tanstack/react-virtual"
+} from "@qr-manager/ui/components/reui/cascader/cascader-item";
 
 /**
  * Windowing for the cascader, in its own file so the primitive's own install
@@ -41,17 +38,17 @@ import {
 /* -------------------------------------------------------------------------- */
 
 export interface UseCascaderVirtualizerOptions {
-  count: number
-  getScrollElement: () => HTMLElement | null
-  estimateSize?: number
-  overscan?: number
+  count: number;
+  getScrollElement: () => HTMLElement | null;
+  estimateSize?: number;
+  overscan?: number;
   /** Key rows by node value, never by index: a tree expand shifts every index. */
-  getItemKey: (index: number) => string | number
+  getItemKey: (index: number) => string | number;
   /** Render index of the highlighted row, or `-1`. Pinned into the window. */
-  activeIndex?: number
+  activeIndex?: number;
 }
 
-export type CascaderVirtualizer = Virtualizer<HTMLElement, HTMLElement>
+export type CascaderVirtualizer = Virtualizer<HTMLElement, HTMLElement>;
 
 /**
  * The cascader's virtualizer: TanStack plus the highlight pinning and
@@ -67,19 +64,19 @@ export function useCascaderVirtualizer({
   getItemKey,
   activeIndex = -1,
 }: UseCascaderVirtualizerOptions): CascaderVirtualizer {
-  const active = activeIndex >= 0 && activeIndex < count ? activeIndex : -1
+  const active = activeIndex >= 0 && activeIndex < count ? activeIndex : -1;
 
   // Keeps the highlighted row mounted so `aria-activedescendant` never dangles.
   const rangeExtractor = React.useCallback(
     (range: Range) => {
-      const indices = new Set(defaultRangeExtractor(range))
-      if (active !== -1) indices.add(active)
-      return Array.from(indices).sort((a, b) => a - b)
+      const indices = new Set(defaultRangeExtractor(range));
+      if (active !== -1) indices.add(active);
+      return Array.from(indices).sort((a, b) => a - b);
     },
-    [active]
-  )
+    [active],
+  );
 
-  const measureEstimate = React.useCallback(() => estimateSize, [estimateSize])
+  const measureEstimate = React.useCallback(() => estimateSize, [estimateSize]);
 
   // React Compiler bails on `useVirtualizer`; harmless, rows memoise one by one.
   // eslint-disable-next-line react-hooks/incompatible-library
@@ -90,15 +87,15 @@ export function useCascaderVirtualizer({
     overscan,
     getItemKey,
     rangeExtractor,
-  })
+  });
 
   // Base UI's scroll-into-view no-ops on a windowed-out row (empty `listRef`).
   React.useEffect(() => {
-    if (active === -1) return
-    virtualizer.scrollToIndex(active, { align: "auto" })
-  }, [active, count, virtualizer])
+    if (active === -1) return;
+    virtualizer.scrollToIndex(active, { align: "auto" });
+  }, [active, count, virtualizer]);
 
-  return virtualizer
+  return virtualizer;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -106,11 +103,11 @@ export function useCascaderVirtualizer({
 /* -------------------------------------------------------------------------- */
 
 interface CascaderVirtualGutter {
-  block: number
-  inline: number
+  block: number;
+  inline: number;
 }
 
-const NO_GUTTER: CascaderVirtualGutter = { block: 0, inline: 0 }
+const NO_GUTTER: CascaderVirtualGutter = { block: 0, inline: 0 };
 
 /**
  * The ROWS' BOX's own padding, never the scrollport's (separate element, reads
@@ -119,30 +116,30 @@ const NO_GUTTER: CascaderVirtualGutter = { block: 0, inline: 0 }
  * an in-flow child of its CONTENT box, so without it rows sit flush.
  */
 function useCascaderVirtualGutter(
-  contentElement: HTMLElement | null
+  contentElement: HTMLElement | null,
 ): CascaderVirtualGutter {
-  const [gutter, setGutter] = React.useState<CascaderVirtualGutter>(NO_GUTTER)
+  const [gutter, setGutter] = React.useState<CascaderVirtualGutter>(NO_GUTTER);
 
   React.useLayoutEffect(() => {
-    if (!contentElement) return
-    const styles = getComputedStyle(contentElement)
-    const block = Number.parseFloat(styles.paddingTop) || 0
+    if (!contentElement) return;
+    const styles = getComputedStyle(contentElement);
+    const block = Number.parseFloat(styles.paddingTop) || 0;
     const inline =
-      Number.parseFloat(styles.paddingInlineStart || styles.paddingLeft) || 0
+      Number.parseFloat(styles.paddingInlineStart || styles.paddingLeft) || 0;
     setGutter((previous) =>
       previous.block === block && previous.inline === inline
         ? previous
-        : { block, inline }
-    )
-  }, [contentElement])
+        : { block, inline },
+    );
+  }, [contentElement]);
 
-  return gutter
+  return gutter;
 }
 
 /** Logical insets, not `left` / `width`, so RTL needs no second code path. */
 function cascaderVirtualRowStyle(
   start: number,
-  gutter: CascaderVirtualGutter
+  gutter: CascaderVirtualGutter,
 ): React.CSSProperties {
   return {
     position: "absolute",
@@ -150,7 +147,7 @@ function cascaderVirtualRowStyle(
     insetInlineStart: gutter.inline,
     insetInlineEnd: gutter.inline,
     transform: `translateY(${start + gutter.block}px)`,
-  }
+  };
 }
 
 /**
@@ -161,13 +158,13 @@ function cascaderVirtualRowStyle(
  * hand-written `overflow-y-auto` container working.
  */
 function cascaderScrollElement(
-  content: HTMLElement | null
+  content: HTMLElement | null,
 ): HTMLElement | null {
-  if (!content) return null
+  if (!content) return null;
   return (
     content.closest<HTMLElement>('[data-slot="scroll-area-viewport"]') ??
     content
-  )
+  );
 }
 
 /**
@@ -178,8 +175,8 @@ function CascaderVirtualSpacer({
   height,
   onContentElement,
 }: {
-  height: number
-  onContentElement: (element: HTMLElement | null) => void
+  height: number;
+  onContentElement: (element: HTMLElement | null) => void;
 }) {
   return (
     <div
@@ -188,7 +185,7 @@ function CascaderVirtualSpacer({
       data-slot="cascader-virtual-spacer"
       style={{ height }}
     />
-  )
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -197,9 +194,9 @@ function CascaderVirtualSpacer({
 
 export interface CascaderVirtualItemsProps {
   /** Row height before measurement. Defaults to the root `estimateRowSize`. */
-  estimateSize?: number
+  estimateSize?: number;
   /** Rows rendered beyond each edge. Defaults to the root `overscan`. */
-  overscan?: number
+  overscan?: number;
 }
 
 /**
@@ -210,16 +207,16 @@ export interface CascaderVirtualItemsProps {
  * indexed rows while Base UI still owns the composite list.
  */
 function CascaderVirtualItems(props: CascaderVirtualItemsProps) {
-  const { virtualized, registerVirtualRenderer } = useCascaderActions()
+  const { virtualized, registerVirtualRenderer } = useCascaderActions();
 
   React.useLayoutEffect(
     () => registerVirtualRenderer(),
-    [registerVirtualRenderer]
-  )
+    [registerVirtualRenderer],
+  );
 
-  if (!virtualized) return <CascaderItems />
+  if (!virtualized) return <CascaderItems />;
 
-  return <CascaderVirtualRows {...props} />
+  return <CascaderVirtualRows {...props} />;
 }
 
 function CascaderVirtualRows({
@@ -234,27 +231,27 @@ function CascaderVirtualRows({
     isSelectable,
     isSelected,
     isIndeterminate,
-  } = useCascaderActions()
+  } = useCascaderActions();
   const { renderedItems, treeRows, deepResults, loadStates } =
-    useCascaderState()
+    useCascaderState();
   // Re-renders on every highlight change, and has to: the pinned row and the
   // scroll target are both derived from it.
-  const highlight = useCascaderHighlight()
+  const highlight = useCascaderHighlight();
 
   const [contentElement, setContentElement] =
-    React.useState<HTMLElement | null>(null)
-  const gutter = useCascaderVirtualGutter(contentElement)
+    React.useState<HTMLElement | null>(null);
+  const gutter = useCascaderVirtualGutter(contentElement);
 
-  const tree = mode === "tree"
-  const count = tree ? treeRows.length : renderedItems.length
-  const showPath = !tree && deepResults !== null
+  const tree = mode === "tree";
+  const count = tree ? treeRows.length : renderedItems.length;
+  const showPath = !tree && deepResults !== null;
 
   const getItemKey = React.useCallback(
     (index: number) =>
       (tree ? treeRows[index]?.node.value : renderedItems[index]?.value) ??
       index,
-    [tree, treeRows, renderedItems]
-  )
+    [tree, treeRows, renderedItems],
+  );
 
   const virtualizer = useCascaderVirtualizer({
     count,
@@ -263,7 +260,7 @@ function CascaderVirtualRows({
     overscan: overscan ?? rootOverscan,
     getItemKey,
     activeIndex: highlight.index,
-  })
+  });
 
   return (
     <>
@@ -272,11 +269,11 @@ function CascaderVirtualRows({
         onContentElement={setContentElement}
       />
       {virtualizer.getVirtualItems().map((row) => {
-        const flat = tree ? treeRows[row.index] : undefined
-        const node = tree ? flat?.node : renderedItems[row.index]
+        const flat = tree ? treeRows[row.index] : undefined;
+        const node = tree ? flat?.node : renderedItems[row.index];
         // For one commit after a query narrows the level, the window can name
         // a row it no longer has; the count recomputes on the same tick.
-        if (!node) return null
+        if (!node) return null;
 
         return (
           <CascaderItem
@@ -300,10 +297,10 @@ function CascaderVirtualRows({
             aria-setsize={flat ? flat.setSize : count}
             aria-posinset={flat ? flat.posInSet : row.index + 1}
           />
-        )
+        );
       })}
     </>
-  )
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -311,7 +308,7 @@ function CascaderVirtualRows({
 /* -------------------------------------------------------------------------- */
 
 export interface CascaderVirtualColumnProps extends CascaderVirtualItemsProps {
-  column: CascaderColumn
+  column: CascaderColumn;
 }
 
 /**
@@ -331,18 +328,18 @@ function CascaderVirtualColumn({
     registerVirtualRenderer,
     virtualize,
     virtualizeThreshold,
-  } = useCascaderActions()
+  } = useCascaderActions();
 
   React.useLayoutEffect(
     () => registerVirtualRenderer(),
-    [registerVirtualRenderer]
-  )
+    [registerVirtualRenderer],
+  );
 
   const windowed = column.active
     ? virtualized
-    : (virtualize ?? column.items.length >= virtualizeThreshold)
+    : (virtualize ?? column.items.length >= virtualizeThreshold);
 
-  if (!windowed) return <CascaderColumnPanel column={column} />
+  if (!windowed) return <CascaderColumnPanel column={column} />;
 
   return (
     <CascaderColumnPanel column={column} virtualized>
@@ -361,13 +358,13 @@ function CascaderVirtualColumn({
         />
       )}
     </CascaderColumnPanel>
-  )
+  );
 }
 
 /** Only the active column subscribes to the highlight; a trail column must not. */
 function CascaderVirtualActiveColumnRows(props: CascaderVirtualColumnProps) {
-  const highlight = useCascaderHighlight()
-  return <CascaderVirtualColumnRows {...props} activeIndex={highlight.index} />
+  const highlight = useCascaderHighlight();
+  return <CascaderVirtualColumnRows {...props} activeIndex={highlight.index} />;
 }
 
 function CascaderVirtualColumnRows({
@@ -384,18 +381,18 @@ function CascaderVirtualColumnRows({
     isSelectable,
     isSelected,
     isIndeterminate,
-  } = useCascaderActions()
-  const { loadStates } = useCascaderState()
+  } = useCascaderActions();
+  const { loadStates } = useCascaderState();
 
   const [contentElement, setContentElement] =
-    React.useState<HTMLElement | null>(null)
-  const gutter = useCascaderVirtualGutter(contentElement)
+    React.useState<HTMLElement | null>(null);
+  const gutter = useCascaderVirtualGutter(contentElement);
 
-  const items = column.items
+  const items = column.items;
   const getItemKey = React.useCallback(
     (index: number) => items[index]?.value ?? index,
-    [items]
-  )
+    [items],
+  );
 
   const virtualizer = useCascaderVirtualizer({
     count: items.length,
@@ -404,7 +401,7 @@ function CascaderVirtualColumnRows({
     overscan: overscan ?? rootOverscan,
     getItemKey,
     activeIndex,
-  })
+  });
 
   return (
     <>
@@ -413,9 +410,9 @@ function CascaderVirtualColumnRows({
         onContentElement={setContentElement}
       />
       {virtualizer.getVirtualItems().map((row) => {
-        const node = items[row.index]
-        if (!node) return null
-        const open = node.value === column.activeValue
+        const node = items[row.index];
+        if (!node) return null;
+        const open = node.value === column.activeValue;
 
         return (
           <CascaderItem
@@ -449,10 +446,10 @@ function CascaderVirtualColumnRows({
                 }
               : null)}
           />
-        )
+        );
       })}
     </>
-  )
+  );
 }
 
-export { CascaderVirtualColumn, CascaderVirtualItems }
+export { CascaderVirtualColumn, CascaderVirtualItems };
