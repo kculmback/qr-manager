@@ -410,6 +410,9 @@ function DataGridProvider<TData extends object>({
   // controller with it would reset its applied-once bookkeeping mid-drag.
   const autoSize = useMemo(
     () => createDataGridAutoSizeController(() => tableRef.current),
+    // `table.store` is the stable identity key described above, not a value the
+    // factory reads -- exhaustive-deps cannot tell the difference.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [table.store],
   );
 

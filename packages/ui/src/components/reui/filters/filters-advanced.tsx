@@ -1543,6 +1543,9 @@ export function FiltersAdvancedPanel<V, O>({
       if (rowStateStore.has(issue.nodeId)) visible.set(issue.nodeId, issue);
     }
     return visible;
+    // `rowStateVersion` is the mutable store's change signal, not a value the
+    // body reads -- dropping it would leave this map stale.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [issues, rowStateStore, rowStateVersion]);
 
   /** Says out loud that a VISIBLE error has appeared, which would

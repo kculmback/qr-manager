@@ -671,6 +671,10 @@ function DataGridTableVirtual<TData extends object>({
     [centerRows, customEstimateSize, estimateSize],
   );
 
+  // React Compiler skips memoizing this component because TanStack Virtual's
+  // getters cannot be memoized safely. That is the intended trade-off here --
+  // the virtualizer must recompute every scroll frame.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: centerRows.length,
     getScrollElement: resolveScrollElement,
@@ -689,6 +693,10 @@ function DataGridTableVirtual<TData extends object>({
     isVirtualizationEnabled && customMeasureElement
       ? virtualizer.measureElement
       : undefined;
+  // The infinite-scroll effect only reads the last item's index. Depending on
+  // that number instead of the array keeps it from re-running on every scroll
+  // frame, where `getVirtualItems()` returns a fresh array of the same rows.
+  const lastVirtualItemIndex = virtualItems[virtualItems.length - 1]?.index;
   const resolvedFetchMoreOffset = Math.max(0, fetchMoreOffset);
   const scrollToRowId =
     scrollToRowIndex !== undefined
@@ -829,12 +837,14 @@ function DataGridTableVirtual<TData extends object>({
       return;
     }
 
-    const lastItem = virtualItems[virtualItems.length - 1];
-    if (!lastItem) return;
+    if (lastVirtualItemIndex === undefined) return;
 
     if (fetchMoreFiredAtCountRef.current === centerRows.length) return;
 
-    if (lastItem.index >= centerRows.length - 1 - resolvedFetchMoreOffset) {
+    if (
+      lastVirtualItemIndex >=
+      centerRows.length - 1 - resolvedFetchMoreOffset
+    ) {
       fetchMoreFiredAtCountRef.current = centerRows.length;
       onFetchMore();
     }
@@ -844,9 +854,9 @@ function DataGridTableVirtual<TData extends object>({
     isFetchingMore,
     isInfiniteMode,
     isVirtualizationEnabled,
+    lastVirtualItemIndex,
     onFetchMore,
     resolvedFetchMoreOffset,
-    virtualItems,
   ]);
 
   return (
