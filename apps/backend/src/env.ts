@@ -26,6 +26,15 @@ export const env = createEnv({
     /** Public origin of the frontend — used for CORS and as a trusted auth origin. */
     FRONTEND_URL: z.url(),
 
+    /**
+     * Origin that printed short links are built from, e.g. `https://qr.sh`.
+     *
+     * Optional: falls back to `BACKEND_URL`, which is already the single public
+     * origin under Compose. Set it only when short links live on their own
+     * domain — and point that domain's `/r/*` at this backend.
+     */
+    SHORT_URL_BASE: z.url().optional(),
+
     /** Generate with `openssl rand -base64 32`. Required in production. */
     AUTH_SECRET:
       process.env.NODE_ENV === "production"

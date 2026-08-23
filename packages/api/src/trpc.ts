@@ -32,6 +32,14 @@ export const createTRPCContext = async (opts: {
   db: Db;
   /** Deployment-wide registration switch, read from the backend's env. */
   allowRegistration: boolean;
+  /**
+   * Public origin that short links are built from, without a trailing slash.
+   *
+   * Lives in the context rather than the browser bundle: the frontend is built
+   * once and served from any domain, so it cannot know its own public origin at
+   * build time. The API returns fully-formed short URLs instead.
+   */
+  shortUrlBase: string;
 }) => {
   const authApi = opts.auth.api;
   const session = await authApi.getSession({
@@ -43,6 +51,7 @@ export const createTRPCContext = async (opts: {
     db: opts.db,
     headers: opts.headers,
     allowRegistration: opts.allowRegistration,
+    shortUrlBase: opts.shortUrlBase,
   };
 };
 /**

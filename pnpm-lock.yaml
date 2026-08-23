@@ -63,6 +63,9 @@ catalogs:
     prettier:
       specifier: ^3.6.2
       version: 3.6.2
+    qrcode.react:
+      specifier: ^4.2.0
+      version: 4.2.0
     shadcn:
       specifier: ^4.18.0
       version: 4.18.0
@@ -140,6 +143,9 @@ importers:
       '@qr-manager/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@qr-manager/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(arktype@2.1.20)(typescript@5.9.3)(valibot@1.0.0-beta.15(typescript@5.9.3))(zod@4.4.3)
@@ -210,6 +216,9 @@ importers:
       '@qr-manager/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@qr-manager/validators':
+        specifier: workspace:*
+        version: link:../../packages/validators
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(arktype@2.1.20)(typescript@5.9.3)(valibot@1.0.0-beta.15(typescript@5.9.3))(zod@4.4.3)
@@ -261,6 +270,9 @@ importers:
       nitro:
         specifier: 3.0.260610-beta
         version: 3.0.260610-beta(@planetscale/database@1.19.0)(better-sqlite3@12.2.0)(chokidar@5.0.0)(dotenv@17.2.2)(drizzle-orm@0.45.2(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.23.1)(@vercel/postgres@0.10.0(utf-8-validate@6.0.4))(better-sqlite3@12.2.0)(gel@2.0.0)(kysely@0.29.5)(mysql2@3.11.3)(pg@8.23.0)(postgres@3.4.4)(prisma@5.22.0))(giget@2.0.0)(jiti@2.7.0)(mysql2@3.11.3)(vite@8.2.2(@types/node@22.18.12)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.0)(tsx@4.23.12)(yaml@2.8.1))(wrangler@4.125.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))
+      qrcode.react:
+        specifier: 'catalog:'
+        version: 4.2.0(react@19.2.8)
       react:
         specifier: catalog:react19
         version: 19.2.8
@@ -408,6 +420,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@qr-manager/validators':
+        specifier: workspace:*
+        version: link:../validators
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.23.1)(@vercel/postgres@0.10.0(utf-8-validate@6.0.4))(better-sqlite3@12.2.0)(gel@2.0.0)(kysely@0.29.5)(mysql2@3.11.3)(pg@8.23.0)(postgres@3.4.4)(prisma@5.22.0)
@@ -5871,6 +5886,11 @@ packages:
   pvutils@1.2.0:
     resolution: {integrity: sha512-BbubeCEyTuQjVMakvJQ/Sxbc93F2pwmbsxONT/ZRrwU7Ua38d8unYTwXpTVLAKJ4BDuH9IGztCjQcd/N/39Dvg==}
     engines: {node: '>=16.0.0'}
+
+  qrcode.react@4.2.0:
+    resolution: {integrity: sha512-QpgqWi8rD9DsS9EP3z7BT+5lY5SFhsqGjpgW5DY/i3mK4M9DTBNz3ErMi8BWYEfI3L0d8GIbGmcdFAS1uIRGjA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   qs@6.15.3:
     resolution: {integrity: sha512-O9gl3zCl5h5blw1KGUzQKhA5oUXSl8rwUIM5o0S3nCXMliSvy5Dzx7/DJcI+SwgICv+IneSZwhBh1oSyEHA71A==}
@@ -12250,6 +12270,10 @@ snapshots:
       tslib: 2.8.1
 
   pvutils@1.2.0: {}
+
+  qrcode.react@4.2.0(react@19.2.8):
+    dependencies:
+      react: 19.2.8
 
   qs@6.15.3:
     dependencies:

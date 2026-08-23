@@ -139,6 +139,7 @@ rather than at the first request.
 | `PORT`                        | no (`3000`)    | Bind port                                                          |
 | `NODE_ENV`                    | no             | `development` \| `production` \| `test`                            |
 | `MIGRATIONS_DIR`              | no             | Overrides where the migration runner looks for SQL                 |
+| `SHORT_URL_BASE`              | no             | Origin printed short links are built from; defaults to `BACKEND_URL` |
 | `ALLOW_REGISTRATION`          | no (`false`)   | Lets visitors create their own account; the first one is always allowed |
 | `AUTH_DISCORD_ID` / `_SECRET` | no             | Enables Discord OAuth when both are set                            |
 

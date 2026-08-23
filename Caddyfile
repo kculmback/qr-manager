@@ -11,6 +11,13 @@
 		reverse_proxy backend:3000
 	}
 
+	# Public short links for dynamic codes. These are what printed QR codes
+	# actually encode, so they must reach the backend rather than the frontend
+	# app, and must sit above the catch-all below.
+	handle /r/* {
+		reverse_proxy backend:3000
+	}
+
 	handle {
 		reverse_proxy frontend:3001
 	}

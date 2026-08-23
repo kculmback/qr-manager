@@ -12,6 +12,8 @@ x-app-env: &app-env
   POSTGRES_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-qr_manager}
   AUTH_SECRET: "${AUTH_SECRET:?AUTH_SECRET is required - generate one with `openssl rand -base64 32`}"
   ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-false}
+  # Blank by default, so short links fall back to the single public origin.
+  SHORT_URL_BASE: ${SHORT_URL_BASE:-}
   AUTH_DISCORD_ID: ${AUTH_DISCORD_ID:-}
   AUTH_DISCORD_SECRET: ${AUTH_DISCORD_SECRET:-}
   NODE_ENV: production

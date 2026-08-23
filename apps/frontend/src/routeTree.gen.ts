@@ -12,8 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppCodesRouteImport } from './routes/_app/codes'
 import { Route as AuthPathRouteImport } from './routes/auth/$path'
 import { Route as AppAdminUsersRouteImport } from './routes/_app/admin/users'
+import { Route as AppCodesIndexRouteImport } from './routes/_app/codes/index'
+import { Route as AppCodesCodeIdRouteImport } from './routes/_app/codes/$codeId'
+import { Route as AppCodesNewRouteImport } from './routes/_app/codes/new'
 import { Route as AppSettingsPathRouteImport } from './routes/_app/settings/$path'
 
 const AppRoute = AppRouteImport.update({
@@ -30,6 +34,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCodesRoute = AppCodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AuthPathRoute = AuthPathRouteImport.update({
   id: '/auth/$path',
   path: '/auth/$path',
@@ -40,6 +49,21 @@ const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCodesIndexRoute = AppCodesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppCodesRoute,
+} as any)
+const AppCodesCodeIdRoute = AppCodesCodeIdRouteImport.update({
+  id: '/$codeId',
+  path: '/$codeId',
+  getParentRoute: () => AppCodesRoute,
+} as any)
+const AppCodesNewRoute = AppCodesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AppCodesRoute,
+} as any)
 const AppSettingsPathRoute = AppSettingsPathRouteImport.update({
   id: '/settings/$path',
   path: '/settings/$path',
@@ -49,39 +73,71 @@ const AppSettingsPathRoute = AppSettingsPathRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/setup': typeof SetupRoute
+  '/codes': typeof AppCodesRouteWithChildren
   '/auth/$path': typeof AuthPathRoute
   '/admin/users': typeof AppAdminUsersRoute
+  '/codes/$codeId': typeof AppCodesCodeIdRoute
+  '/codes/new': typeof AppCodesNewRoute
   '/settings/$path': typeof AppSettingsPathRoute
+  '/codes/': typeof AppCodesIndexRoute
 }
 export interface FileRoutesByTo {
   '/setup': typeof SetupRoute
   '/auth/$path': typeof AuthPathRoute
   '/': typeof AppIndexRoute
   '/admin/users': typeof AppAdminUsersRoute
+  '/codes/$codeId': typeof AppCodesCodeIdRoute
+  '/codes/new': typeof AppCodesNewRoute
   '/settings/$path': typeof AppSettingsPathRoute
+  '/codes': typeof AppCodesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/setup': typeof SetupRoute
+  '/_app/codes': typeof AppCodesRouteWithChildren
   '/auth/$path': typeof AuthPathRoute
   '/_app/': typeof AppIndexRoute
   '/_app/admin/users': typeof AppAdminUsersRoute
+  '/_app/codes/$codeId': typeof AppCodesCodeIdRoute
+  '/_app/codes/new': typeof AppCodesNewRoute
   '/_app/settings/$path': typeof AppSettingsPathRoute
+  '/_app/codes/': typeof AppCodesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/setup' | '/auth/$path' | '/admin/users' | '/settings/$path'
+  fullPaths:
+    | '/'
+    | '/setup'
+    | '/codes'
+    | '/auth/$path'
+    | '/admin/users'
+    | '/codes/$codeId'
+    | '/codes/new'
+    | '/settings/$path'
+    | '/codes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/setup' | '/auth/$path' | '/' | '/admin/users' | '/settings/$path'
+  to:
+    | '/setup'
+    | '/auth/$path'
+    | '/'
+    | '/admin/users'
+    | '/codes/$codeId'
+    | '/codes/new'
+    | '/settings/$path'
+    | '/codes'
   id:
     | '__root__'
     | '/_app'
     | '/setup'
+    | '/_app/codes'
     | '/auth/$path'
     | '/_app/'
     | '/_app/admin/users'
+    | '/_app/codes/$codeId'
+    | '/_app/codes/new'
     | '/_app/settings/$path'
+    | '/_app/codes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -113,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/codes': {
+      id: '/_app/codes'
+      path: '/codes'
+      fullPath: '/codes'
+      preLoaderRoute: typeof AppCodesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/auth/$path': {
       id: '/auth/$path'
       path: '/auth/$path'
@@ -127,6 +190,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminUsersRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/codes/': {
+      id: '/_app/codes/'
+      path: '/'
+      fullPath: '/codes/'
+      preLoaderRoute: typeof AppCodesIndexRouteImport
+      parentRoute: typeof AppCodesRoute
+    }
+    '/_app/codes/$codeId': {
+      id: '/_app/codes/$codeId'
+      path: '/$codeId'
+      fullPath: '/codes/$codeId'
+      preLoaderRoute: typeof AppCodesCodeIdRouteImport
+      parentRoute: typeof AppCodesRoute
+    }
+    '/_app/codes/new': {
+      id: '/_app/codes/new'
+      path: '/new'
+      fullPath: '/codes/new'
+      preLoaderRoute: typeof AppCodesNewRouteImport
+      parentRoute: typeof AppCodesRoute
+    }
     '/_app/settings/$path': {
       id: '/_app/settings/$path'
       path: '/settings/$path'
@@ -137,13 +221,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppCodesRouteChildren {
+  AppCodesCodeIdRoute: typeof AppCodesCodeIdRoute
+  AppCodesNewRoute: typeof AppCodesNewRoute
+  AppCodesIndexRoute: typeof AppCodesIndexRoute
+}
+
+const AppCodesRouteChildren: AppCodesRouteChildren = {
+  AppCodesCodeIdRoute: AppCodesCodeIdRoute,
+  AppCodesNewRoute: AppCodesNewRoute,
+  AppCodesIndexRoute: AppCodesIndexRoute,
+}
+
+const AppCodesRouteWithChildren = AppCodesRoute._addFileChildren(
+  AppCodesRouteChildren,
+)
+
 interface AppRouteChildren {
+  AppCodesRoute: typeof AppCodesRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppSettingsPathRoute: typeof AppSettingsPathRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCodesRoute: AppCodesRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppSettingsPathRoute: AppSettingsPathRoute,

@@ -1,5 +1,12 @@
 {
   "extends": "@qr-manager/tsconfig/compiled-package.json",
+  "compilerOptions": {
+    // Payload encoding uses `URL`, `URLSearchParams` and `crypto.getRandomValues`.
+    // All three are web platform globals present in Node 22 as well, which is
+    // what keeps this package importable from the browser bundle and the API
+    // alike -- it must not reach for `node:crypto`.
+    "lib": ["ES2022", "dom"]
+  },
   "include": ["src"],
   "exclude": ["node_modules"]
 }

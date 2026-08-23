@@ -4,6 +4,7 @@ import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import SuperJSON from "superjson";
 
+import { NotFound } from "~/components/not-found";
 import { makeTRPCClient, TRPCProvider } from "~/lib/trpc";
 import { routeTree } from "./routeTree.gen";
 
@@ -24,6 +25,10 @@ export function getRouter() {
     routeTree,
     context: { queryClient, trpc },
     defaultPreload: "intent",
+    // Rendered for any unmatched path. Worth having a real page for: a static
+    // code's URL cannot be corrected after it is printed, so a dead link into
+    // this app keeps sending people here indefinitely.
+    defaultNotFoundComponent: NotFound,
     // `TRPCProvider` only supplies the tRPC options proxy — it does not mount
     // a `QueryClientProvider`. Without one, every `useQueryClient()` in the
     // tree falls back to whatever its own library creates: Better Auth UI's

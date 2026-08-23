@@ -20,6 +20,7 @@
     "@qr-manager/api": "workspace:*",
     "@qr-manager/auth": "workspace:*",
     "@qr-manager/db": "workspace:*",
+    "@qr-manager/validators": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@trpc/server": "catalog:",
     "better-auth": "catalog:",

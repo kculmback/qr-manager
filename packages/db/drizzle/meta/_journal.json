@@ -36,6 +36,13 @@
       "when": 1787463215599,
       "tag": "0004_friendly_maginty",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787467682993,
+      "tag": "0005_clumsy_mister_fear",
+      "breakpoints": true
     }
   ]
 }
