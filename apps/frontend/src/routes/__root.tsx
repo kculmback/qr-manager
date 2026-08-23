@@ -11,10 +11,7 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 
 import type { AppRouter } from "@qr-manager/api";
-import {
-  themeDetectorScript,
-  ThemeToggle,
-} from "@qr-manager/ui/components/theme";
+import { themeDetectorScript } from "@qr-manager/ui/components/theme";
 import appCss from "@qr-manager/ui/globals.css?url";
 
 import { Providers } from "~/components/providers";
@@ -52,13 +49,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className="bg-background text-foreground min-h-screen font-sans antialiased">
-        <Providers>
-          {children}
-
-          <div className="absolute right-4 bottom-12">
-            <ThemeToggle />
-          </div>
-        </Providers>
+        <Providers>{children}</Providers>
 
         <TanStackRouterDevtools position="bottom-right" />
         <Scripts />

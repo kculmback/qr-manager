@@ -12,24 +12,24 @@ import {
   DropdownMenuTrigger,
 } from "./dropdown-menu";
 
-const ThemeModeSchema = z.enum(["light", "dark", "auto"]);
+export const ThemeModeSchema = z.enum(["light", "dark", "system"]);
 
 const themeKey = "theme-mode";
 
 export type ThemeMode = z.output<typeof ThemeModeSchema>;
-export type ResolvedTheme = Exclude<ThemeMode, "auto">;
+export type ResolvedTheme = Exclude<ThemeMode, "system">;
 
-const getStoredThemeMode = (): ThemeMode => {
-  if (typeof window === "undefined") return "auto";
+export const getStoredThemeMode = (): ThemeMode => {
+  if (typeof window === "undefined") return "system";
   try {
     const storedTheme = localStorage.getItem(themeKey);
     return ThemeModeSchema.parse(storedTheme);
   } catch {
-    return "auto";
+    return "system";
   }
 };
 
-const setStoredThemeMode = (theme: ThemeMode) => {
+export const setStoredThemeMode = (theme: ThemeMode) => {
   try {
     const parsedTheme = ThemeModeSchema.parse(theme);
     localStorage.setItem(themeKey, parsedTheme);
@@ -47,18 +47,18 @@ const getSystemTheme = () => {
 
 const updateThemeClass = (themeMode: ThemeMode) => {
   const root = document.documentElement;
-  root.classList.remove("light", "dark", "auto");
-  const newTheme = themeMode === "auto" ? getSystemTheme() : themeMode;
+  root.classList.remove("light", "dark", "system");
+  const newTheme = themeMode === "system" ? getSystemTheme() : themeMode;
   root.classList.add(newTheme);
 
-  if (themeMode === "auto") {
-    root.classList.add("auto");
+  if (themeMode === "system") {
+    root.classList.add("system");
   }
 };
 
 const setupPreferredListener = () => {
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  const handler = () => updateThemeClass("auto");
+  const handler = () => updateThemeClass("system");
   mediaQuery.addEventListener("change", handler);
   return () => mediaQuery.removeEventListener("change", handler);
 };
@@ -66,8 +66,8 @@ const setupPreferredListener = () => {
 const getNextTheme = (current: ThemeMode): ThemeMode => {
   const themes: ThemeMode[] =
     getSystemTheme() === "dark"
-      ? ["auto", "light", "dark"]
-      : ["auto", "dark", "light"];
+      ? ["system", "light", "dark"]
+      : ["system", "dark", "light"];
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return themes[(themes.indexOf(current) + 1) % themes.length]!;
 };
@@ -75,19 +75,19 @@ const getNextTheme = (current: ThemeMode): ThemeMode => {
 export const themeDetectorScript = (function () {
   function themeFn() {
     const isValidTheme = (theme: string): theme is ThemeMode => {
-      const validThemes = ["light", "dark", "auto"] as const;
+      const validThemes = ["light", "dark", "system"] as const;
       return validThemes.includes(theme as ThemeMode);
     };
 
-    const storedTheme = localStorage.getItem("theme-mode") ?? "auto";
-    const validTheme = isValidTheme(storedTheme) ? storedTheme : "auto";
+    const storedTheme = localStorage.getItem("theme-mode") ?? "system";
+    const validTheme = isValidTheme(storedTheme) ? storedTheme : "system";
 
-    if (validTheme === "auto") {
-      const autoTheme = window.matchMedia("(prefers-color-scheme: dark)")
+    if (validTheme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
         .matches
         ? "dark"
         : "light";
-      document.documentElement.classList.add(autoTheme, "auto");
+      document.documentElement.classList.add(systemTheme, "system");
     } else {
       document.documentElement.classList.add(validTheme);
     }
@@ -109,11 +109,11 @@ export function ThemeProvider({ children }: React.PropsWithChildren) {
   const [themeMode, setThemeMode] = React.useState(getStoredThemeMode);
 
   React.useEffect(() => {
-    if (themeMode !== "auto") return;
+    if (themeMode !== "system") return;
     return setupPreferredListener();
   }, [themeMode]);
 
-  const resolvedTheme = themeMode === "auto" ? getSystemTheme() : themeMode;
+  const resolvedTheme = themeMode === "system" ? getSystemTheme() : themeMode;
 
   const setTheme = (newTheme: ThemeMode) => {
     setThemeMode(newTheme);
@@ -161,9 +161,9 @@ export function ThemeToggle() {
           />
         }
       >
-        <SunIcon className="light:scale-100! auto:scale-0!" />
-        <MoonIcon className="auto:scale-0! dark:scale-100!" />
-        <ComputerIcon className="auto:scale-100!" />
+        <SunIcon className="light:scale-100! system:scale-0!" />
+        <MoonIcon className="system:scale-0! dark:scale-100!" />
+        <ComputerIcon className="system:scale-100!" />
         <span className="sr-only">Toggle theme</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -173,7 +173,7 @@ export function ThemeToggle() {
         <DropdownMenuItem onClick={() => setTheme("dark")}>
           Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("auto")}>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>

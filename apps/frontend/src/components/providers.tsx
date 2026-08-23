@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 
-import type { ThemeMode } from "@qr-manager/ui/components/theme";
 import {
+  ThemeModeSchema,
   ThemeProvider,
   useTheme as useBaseTheme,
 } from "@qr-manager/ui/components/theme";
@@ -70,6 +70,8 @@ function useTheme() {
   const baseTheme = useBaseTheme();
   return {
     ...baseTheme,
-    setTheme: (theme: string) => baseTheme.setTheme(theme as ThemeMode),
+    theme: baseTheme.themeMode,
+    setTheme: baseTheme.setTheme as (theme: string) => void,
+    themes: ThemeModeSchema.options,
   };
 }

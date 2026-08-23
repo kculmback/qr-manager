@@ -9,64 +9,76 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AuthPathRouteImport } from './routes/auth/$path'
-import { Route as SettingsPathRouteImport } from './routes/settings/$path'
+import { Route as AppSettingsPathRouteImport } from './routes/_app/settings/$path'
 
-const IndexRoute = IndexRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
 const AuthPathRoute = AuthPathRouteImport.update({
   id: '/auth/$path',
   path: '/auth/$path',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsPathRoute = SettingsPathRouteImport.update({
+const AppSettingsPathRoute = AppSettingsPathRouteImport.update({
   id: '/settings/$path',
   path: '/settings/$path',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
   '/auth/$path': typeof AuthPathRoute
-  '/settings/$path': typeof SettingsPathRoute
+  '/settings/$path': typeof AppSettingsPathRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/auth/$path': typeof AuthPathRoute
-  '/settings/$path': typeof SettingsPathRoute
+  '/': typeof AppIndexRoute
+  '/settings/$path': typeof AppSettingsPathRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
   '/auth/$path': typeof AuthPathRoute
-  '/settings/$path': typeof SettingsPathRoute
+  '/_app/': typeof AppIndexRoute
+  '/_app/settings/$path': typeof AppSettingsPathRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/auth/$path' | '/settings/$path'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/$path' | '/settings/$path'
-  id: '__root__' | '/' | '/auth/$path' | '/settings/$path'
+  to: '/auth/$path' | '/' | '/settings/$path'
+  id: '__root__' | '/_app' | '/auth/$path' | '/_app/' | '/_app/settings/$path'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
   AuthPathRoute: typeof AuthPathRoute
-  SettingsPathRoute: typeof SettingsPathRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
     }
     '/auth/$path': {
       id: '/auth/$path'
@@ -75,20 +87,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings/$path': {
-      id: '/settings/$path'
+    '/_app/settings/$path': {
+      id: '/_app/settings/$path'
       path: '/settings/$path'
       fullPath: '/settings/$path'
-      preLoaderRoute: typeof SettingsPathRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppSettingsPathRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
+interface AppRouteChildren {
+  AppIndexRoute: typeof AppIndexRoute
+  AppSettingsPathRoute: typeof AppSettingsPathRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppIndexRoute: AppIndexRoute,
+  AppSettingsPathRoute: AppSettingsPathRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
   AuthPathRoute: AuthPathRoute,
-  SettingsPathRoute: SettingsPathRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

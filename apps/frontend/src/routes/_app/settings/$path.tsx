@@ -8,7 +8,7 @@ import { authClient } from "~/lib/auth/client";
 
 const validSettingsPaths = [...Object.values({ ...viewPaths.settings })];
 
-export const Route = createFileRoute("/settings/$path")({
+export const Route = createFileRoute("/_app/settings/$path")({
   async beforeLoad({ params: { path }, context: { queryClient }, location }) {
     if (!validSettingsPaths.includes(path)) {
       throw notFound();
