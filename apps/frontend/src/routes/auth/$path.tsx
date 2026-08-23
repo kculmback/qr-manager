@@ -2,12 +2,13 @@ import { viewPaths } from "@better-auth-ui/core";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { Auth } from "~/components/auth/auth";
-
-// import { twoFactorPlugin } from "~/lib/auth/two-factor-plugin"
+import { twoFactorPlugin } from "~/lib/auth/two-factor-plugin";
 
 const validAuthPathSegments = new Set([
   ...Object.values({ ...viewPaths.auth }),
-  // twoFactorPlugin().viewPaths.auth.twoFactor
+  // Contributed by the plugin rather than the built-in view paths, so the
+  // challenge would otherwise be redirected away as an unknown segment.
+  twoFactorPlugin().viewPaths.auth.twoFactor,
 ]);
 
 export const Route = createFileRoute("/auth/$path")({

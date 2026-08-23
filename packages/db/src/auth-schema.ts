@@ -13,6 +13,10 @@ export const user = pgTable("user", (t) => ({
   banned: t.boolean(),
   banReason: t.text(),
   banExpires: t.timestamp(),
+  // Added by the better-auth `twoFactor` plugin. Only flipped true once a
+  // first TOTP verification succeeds, so enrollment can be abandoned midway
+  // without locking the account behind a factor the user never confirmed.
+  twoFactorEnabled: t.boolean().default(false),
 }));
 
 export const session = pgTable("session", (t) => ({
@@ -64,6 +68,35 @@ export const verification = pgTable("verification", (t) => ({
   createdAt: t.timestamp(),
   updatedAt: t.timestamp(),
 }));
+
+// Added by the better-auth `twoFactor` plugin: one row per user enrolled in
+// two-factor auth. `secret` and `backupCodes` are encrypted with `AUTH_SECRET`
+// before they reach this table, so rotating that secret invalidates every
+// enrollment.
+export const twoFactor = pgTable(
+  "two_factor",
+  (t) => ({
+    id: t.text().primaryKey(),
+    /** Encrypted TOTP shared secret. */
+    secret: t.text().notNull(),
+    /** Encrypted, single-use recovery codes. */
+    backupCodes: t.text().notNull(),
+    userId: t
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    verified: t.boolean().default(true),
+    /** Drives the lockout below; reset on a successful verification. */
+    failedVerificationCount: t.integer().default(0),
+    lockedUntil: t.timestamp(),
+  }),
+  (table) => [
+    // Verification resolves the enrollment by secret, and the settings card
+    // looks it up by user — both are on request paths.
+    index("two_factor_secret_idx").on(table.secret),
+    index("two_factor_user_id_idx").on(table.userId),
+  ],
+);
 
 // Added by the better-auth `passkey` plugin: one row per registered WebAuthn
 // credential.

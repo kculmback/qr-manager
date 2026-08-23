@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback } from "react";
+import { authQueryKeys } from "@better-auth-ui/core";
 import { useAuth } from "@better-auth-ui/react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   isTwoFactorRedirect,
@@ -30,13 +32,14 @@ import {
  */
 export function useSignInContinuation() {
   const { basePaths, navigate, plugins, redirectTo } = useAuth();
+  const queryClient = useQueryClient();
 
   const twoFactorPath = plugins.find(
     (plugin) => plugin.id === TWO_FACTOR_PLUGIN_ID,
   )?.viewPaths?.auth?.twoFactor;
 
   return useCallback(
-    (data: unknown) => {
+    async (data: unknown) => {
       if (twoFactorPath && isTwoFactorRedirect(data)) {
         storeTwoFactorMethods(data.twoFactorMethods);
 
@@ -46,8 +49,18 @@ export function useSignInContinuation() {
         return;
       }
 
+      // `redirectTo` usually points at a guarded route, and those guards read
+      // the session through `ensureSession` — i.e. `ensureQueryData`, which
+      // serves whatever is cached and never revalidates. Whatever bounced the
+      // user here (signing out, or hitting a protected route) already cached
+      // `null`, so navigating now would hit that stale entry and bounce
+      // straight back with `redirectTo` intact — indistinguishable from the
+      // parameter being ignored. Invalidating is not enough for a cache-first
+      // read; the entry has to actually be refetched before the guard runs.
+      await queryClient.refetchQueries({ queryKey: authQueryKeys.session });
+
       navigate({ to: redirectTo });
     },
-    [basePaths.auth, navigate, redirectTo, twoFactorPath],
+    [basePaths.auth, navigate, queryClient, redirectTo, twoFactorPath],
   );
 }

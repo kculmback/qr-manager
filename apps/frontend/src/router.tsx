@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
@@ -24,12 +24,22 @@ export function getRouter() {
     routeTree,
     context: { queryClient, trpc },
     defaultPreload: "intent",
+    // `TRPCProvider` only supplies the tRPC options proxy — it does not mount
+    // a `QueryClientProvider`. Without one, every `useQueryClient()` in the
+    // tree falls back to whatever its own library creates: Better Auth UI's
+    // `AuthProvider` quietly builds a private `QueryClient` and renders the
+    // whole app inside it. Route guards read `context.queryClient` — this one
+    // — so the session the auth UI writes and the session a guard checks were
+    // two different caches, and SSR-prefetched data never hydrated into the
+    // cache components actually read.
     Wrap: (props) => (
-      <TRPCProvider
-        trpcClient={trpcClient}
-        queryClient={queryClient}
-        {...props}
-      />
+      <QueryClientProvider client={queryClient}>
+        <TRPCProvider
+          trpcClient={trpcClient}
+          queryClient={queryClient}
+          {...props}
+        />
+      </QueryClientProvider>
     ),
   });
   setupRouterSsrQueryIntegration({

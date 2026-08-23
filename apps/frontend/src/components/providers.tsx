@@ -13,6 +13,7 @@ import { adminPlugin } from "~/lib/auth/admin-plugin";
 import { authClient } from "~/lib/auth/client";
 import { passkeyPlugin } from "~/lib/auth/passkey-plugin";
 import { themePlugin } from "~/lib/auth/theme-plugin";
+import { twoFactorPlugin } from "~/lib/auth/two-factor-plugin";
 import { AuthProvider } from "./auth/auth-provider";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -38,7 +39,12 @@ export function Providers({ children }: { children: ReactNode }) {
             //   passwordReset: true,
             //   changeEmail: true
             // }),
-            // twoFactorPlugin(),
+            twoFactorPlugin({
+              // The server registers no `sendOTP`, so the emailed-code factor
+              // is not offered at enrollment. Keep in step with
+              // `packages/auth`'s `twoFactor()` options.
+              enrollmentMethods: ["totp"],
+            }),
             passkeyPlugin(),
             // apiKeyPlugin({
             //   organization: true,

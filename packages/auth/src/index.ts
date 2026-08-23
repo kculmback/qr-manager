@@ -2,7 +2,7 @@ import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
-import { admin, oAuthProxy } from "better-auth/plugins";
+import { admin, oAuthProxy, twoFactor } from "better-auth/plugins";
 
 import type { Db } from "@qr-manager/db/client";
 
@@ -54,6 +54,15 @@ export function initAuth<
     }),
     plugins: [
       admin(),
+      twoFactor({
+        // Shown by authenticator apps next to the account. Matches the
+        // passkey relying party name below so both prompts read the same.
+        issuer: "QR Manager",
+        // No `otpOptions.sendOTP`: this deployment has no mailer, so the
+        // emailed-code factor stays off and enrollment is TOTP + backup
+        // codes only. `apps/frontend`'s `twoFactorPlugin()` is pinned to the
+        // same set — configure both together if a sender is added.
+      }),
       passkey({
         // The WebAuthn ceremony happens in the browser app, so the relying
         // party is the frontend's hostname — which is the backend's too unless
