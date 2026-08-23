@@ -1,4 +1,4 @@
-import { pgTable } from "drizzle-orm/pg-core";
+import { index, pgTable } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", (t) => ({
   id: t.text().primaryKey(),
@@ -64,3 +64,31 @@ export const verification = pgTable("verification", (t) => ({
   createdAt: t.timestamp(),
   updatedAt: t.timestamp(),
 }));
+
+// Added by the better-auth `passkey` plugin: one row per registered WebAuthn
+// credential.
+export const passkey = pgTable(
+  "passkey",
+  (t) => ({
+    id: t.text().primaryKey(),
+    /** User-facing label, e.g. "MacBook Touch ID". */
+    name: t.text(),
+    publicKey: t.text().notNull(),
+    userId: t
+      .text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    credentialID: t.text().notNull(),
+    counter: t.integer().notNull(),
+    deviceType: t.text().notNull(),
+    backedUp: t.boolean().notNull(),
+    /** Comma-separated WebAuthn transports, e.g. `internal,hybrid`. */
+    transports: t.text(),
+    createdAt: t.timestamp(),
+    /** Authenticator model identifier, used to name and icon the credential. */
+    aaguid: t.text(),
+  }),
+  // Every passkey sign-in resolves the credential the browser returned, so
+  // this lookup is on the hot auth path.
+  (table) => [index("passkey_credential_id_idx").on(table.credentialID)],
+);

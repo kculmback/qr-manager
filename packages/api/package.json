@@ -22,6 +22,7 @@
     "@qr-manager/auth": "workspace:*",
     "@qr-manager/db": "workspace:*",
     "@qr-manager/validators": "workspace:*",
+    "@simplewebauthn/server": "catalog:",
     "@trpc/server": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"

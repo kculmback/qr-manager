@@ -182,6 +182,15 @@ pnpm auth:generate
 pnpm db:generate
 ```
 
+### Passkeys
+
+Sign-in with a passkey is enabled out of the box, alongside email + password.
+WebAuthn ties every credential to the hostname it was registered on, which the
+backend takes from `FRONTEND_URL`, so two things follow for a self-hosted
+instance: the app must be served over HTTPS (browsers only exempt
+`localhost`), and moving to a new domain invalidates existing passkeys. Email +
+password and OAuth are unaffected, so a domain change never locks anyone out.
+
 ## Deploying to the cloud
 
 ### Container platforms

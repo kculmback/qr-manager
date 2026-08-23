@@ -11,6 +11,7 @@ import { TooltipProvider } from "@qr-manager/ui/components/tooltip";
 
 import { adminPlugin } from "~/lib/auth/admin-plugin";
 import { authClient } from "~/lib/auth/client";
+import { passkeyPlugin } from "~/lib/auth/passkey-plugin";
 import { themePlugin } from "~/lib/auth/theme-plugin";
 import { AuthProvider } from "./auth/auth-provider";
 
@@ -38,7 +39,7 @@ export function Providers({ children }: { children: ReactNode }) {
             //   changeEmail: true
             // }),
             // twoFactorPlugin(),
-            // passkeyPlugin(),
+            passkeyPlugin(),
             // apiKeyPlugin({
             //   organization: true,
             //   configurations: [

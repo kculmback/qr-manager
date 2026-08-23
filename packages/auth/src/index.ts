@@ -1,5 +1,6 @@
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { admin, oAuthProxy } from "better-auth/plugins";
 
@@ -28,6 +29,14 @@ export function initAuth<
   discordClientSecret?: string;
   extraPlugins?: TExtraPlugins;
 }) {
+  const passkeyOrigins = [
+    ...new Set(
+      [options.baseUrl, options.frontendUrl]
+        .filter((url) => url !== undefined)
+        .map((url) => new URL(url).origin),
+    ),
+  ];
+
   const config = {
     database: drizzleAdapter(options.db, {
       provider: "pg",
@@ -45,6 +54,16 @@ export function initAuth<
     }),
     plugins: [
       admin(),
+      passkey({
+        // The WebAuthn ceremony happens in the browser app, so the relying
+        // party is the frontend's hostname — which is the backend's too unless
+        // this is a deliberate split-domain deployment.
+        rpID: new URL(options.frontendUrl ?? options.baseUrl).hostname,
+        rpName: "QR Manager",
+        // Pin the accepted origins instead of trusting the request's `Origin`
+        // header, which is what the plugin falls back to.
+        origin: passkeyOrigins,
+      }),
       oAuthProxy({
         productionURL: options.productionUrl,
       }),

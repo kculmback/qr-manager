@@ -138,6 +138,37 @@ Auth tables are generated: `pnpm auth:generate` rewrites
 `packages/db/src/auth-schema.ts` from the better-auth config. Regenerate after
 changing auth options, then `pnpm db:generate` for the migration.
 
+The generator is `@better-auth/cli`, whose latest release is still 1.4.x while
+this repo runs better-auth 1.7. It emits plain `pgTable(name, {...})` columns
+with hand-written snake_case names, and it drops columns 1.4 doesn't know about
+(`account.issuer`). Treat its output as a diff to read, not to commit: take the
+new table, rewrite it in the `(t) => ({ ... })` form the rest of the file uses,
+and leave everything else alone.
+
+Do not add `@better-auth/cli` to a workspace's dependencies. It pulls
+better-auth 1.4 into that workspace's tree, and pnpm then satisfies the peers of
+1.7 packages from there — `@better-auth/passkey` silently resolves better-call
+1.1 instead of 1.4 and throws `does not provide an export named
+'kAPIErrorHeaderSymbol'` on import. The `generate` script runs the CLI through
+`pnpx`, so it never needed the dependency.
+
+### Passkeys are bound to one hostname
+
+`packages/auth` derives the WebAuthn relying party from `frontendUrl` (falling
+back to `baseUrl`), because the ceremony runs in the browser app, not the API.
+Two consequences: WebAuthn needs a secure context, so anything other than
+`localhost` must be HTTPS, and a passkey registered against one hostname will
+not verify against another. Moving a deployment to a new domain invalidates
+every stored passkey — passwords and OAuth still work, so nobody is locked out.
+
+`origin` is pinned to `baseUrl` + `frontendUrl` rather than left to the plugin's
+default, which trusts the request's `Origin` header.
+
+The `Auth` type now names types from `@simplewebauthn/server`, so any package
+that re-exports something inferred from it needs that package as a dependency or
+`tsc` raises TS2742 — that is why `packages/api` depends on it without importing
+it.
+
 ### Adding an environment variable touches five places
 
 Env is validated at startup by `@t3-oss/env-core` + zod v4, so a missed spot

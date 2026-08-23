@@ -19,13 +19,13 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.7.1",
+    "@better-auth/passkey": "catalog:",
     "@qr-manager/db": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "better-auth": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@better-auth/cli": "catalog:",
     "@qr-manager/eslint-config": "workspace:*",
     "@qr-manager/prettier-config": "workspace:*",
     "@qr-manager/tsconfig": "workspace:*",
