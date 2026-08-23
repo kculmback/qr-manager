@@ -6,7 +6,7 @@ import { Auth } from "~/components/auth/auth";
 // import { twoFactorPlugin } from "~/lib/auth/two-factor-plugin"
 
 const validAuthPathSegments = new Set([
-  ...Object.values(viewPaths.auth),
+  ...Object.values({ ...viewPaths.auth }),
   // twoFactorPlugin().viewPaths.auth.twoFactor
 ]);
 

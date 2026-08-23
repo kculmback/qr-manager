@@ -52,7 +52,7 @@ function DataGridColumnFilter<TData extends object, TValue>({
           <Button variant="outline" size="sm">
             <CirclePlusIcon className="size-4" />
             {title}
-            {selectedValues?.size > 0 && (
+            {selectedValues.size > 0 && (
               <>
                 <Separator orientation="vertical" className="mx-2 h-4" />
                 <Badge

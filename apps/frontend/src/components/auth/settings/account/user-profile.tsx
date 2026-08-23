@@ -101,11 +101,11 @@ export function UserProfile({ className }: UserProfileProps) {
 
               {session ? (
                 <Input
-                  key={session?.user.name}
+                  key={session.user.name}
                   id="name"
                   name="name"
                   autoComplete="name"
-                  defaultValue={session?.user.name}
+                  defaultValue={session.user.name}
                   placeholder={localization.auth.name}
                   disabled={isPending}
                   required
@@ -158,7 +158,7 @@ export function UserProfile({ className }: UserProfileProps) {
               const key = `${field.name}:${
                 value instanceof Date
                   ? value.toISOString()
-                  : String(value ?? "")
+                  : JSON.stringify(value ?? "")
               }`;
 
               return (

@@ -113,7 +113,7 @@ export function flattenFilterConditions<V>(
     .filter(isFilterRuleComplete)
     .map((rule) => ({
       path: rule.path,
-      field: rule.path[0],
+      field: rule.path[0] ?? "",
       operator: rule.operator,
       values:
         rule.value === undefined || rule.value === null
@@ -311,8 +311,7 @@ export function findFilterNode<V>(
     parent: FilterGroupNode<V>;
     index: number;
   } | null => {
-    for (let i = 0; i < group.rules.length; i++) {
-      const child = group.rules[i];
+    for (const [i, child] of group.rules.entries()) {
       if (child.id === id) return { node: child, parent: group, index: i };
       if (isFilterGroup(child)) {
         const found = walk(child);
@@ -349,13 +348,14 @@ function rewriteGroup<V>(
 ): FilterGroupNode<V> {
   if (shouldRewrite(group)) return transform(group);
 
-  let changed = false;
-  const rules = group.rules.map((child) => {
-    if (!isFilterGroup(child)) return child;
-    const next = rewriteGroup(child, shouldRewrite, transform);
-    if (next !== child) changed = true;
-    return next;
-  });
+  const rules = group.rules.map((child) =>
+    isFilterGroup(child)
+      ? rewriteGroup(child, shouldRewrite, transform)
+      : child,
+  );
+  // Compared after the walk rather than tracked by a flag inside it: a flag
+  // assigned from the callback narrows to `false` for the reader below.
+  const changed = rules.some((rule, index) => rule !== group.rules[index]);
 
   return changed ? { ...group, rules } : group;
 }
@@ -461,7 +461,7 @@ export function duplicateFilterNode<V>(
   nextId: () => string,
 ): FilterQuery<V> {
   const found = findFilterNode(query, id);
-  if (!found || !found.parent) return query;
+  if (!found?.parent) return query;
 
   return insertFilterNode(
     query,
@@ -504,18 +504,20 @@ export function moveFilterNode<V>(
   delta: number,
 ): FilterQuery<V> {
   const found = findFilterNode(query, id);
-  if (!found || !found.parent) return query;
+  if (!found?.parent) return query;
+  const { parent } = found;
 
   const from = found.index;
   const to = from + delta;
-  if (to < 0 || to >= found.parent.rules.length || delta === 0) return query;
+  if (to < 0 || to >= parent.rules.length || delta === 0) return query;
 
   return rewriteGroup(
     query,
-    (group) => group.id === found.parent!.id,
+    (group) => group.id === parent.id,
     (group) => {
       const rules = [...group.rules];
       const [moved] = rules.splice(from, 1);
+      if (moved === undefined) return group;
       rules.splice(to, 0, moved);
       return { ...group, rules };
     },
@@ -569,7 +571,7 @@ export function moveFilterNodeTo<V>(
   index: number,
 ): FilterQuery<V> {
   const found = findFilterNode(query, id);
-  if (!found || !found.parent) return query;
+  if (!found?.parent) return query;
   if (containsFilterNode(found.node, parentId)) return query;
 
   const destination = findFilterNode(query, parentId);
@@ -603,7 +605,7 @@ export function copyFilterNodeTo<V>(
   nextId: () => string,
 ): FilterQuery<V> {
   const found = findFilterNode(query, id);
-  if (!found || !found.parent) return query;
+  if (!found?.parent) return query;
 
   const destination = findFilterNode(query, parentId);
   if (!destination || !isFilterGroup(destination.node)) return query;
@@ -627,11 +629,12 @@ export function wrapFilterNodeInGroup<V>(
   combinator: FilterCombinator = "or",
 ): FilterQuery<V> {
   const found = findFilterNode(query, id);
-  if (!found || !found.parent) return query;
+  if (!found?.parent) return query;
+  const { parent } = found;
 
   return rewriteGroup(
     query,
-    (group) => group.id === found.parent!.id,
+    (group) => group.id === parent.id,
     (group) => ({
       ...group,
       rules: group.rules.map((child) =>
@@ -654,12 +657,13 @@ export function unwrapFilterGroup<V>(
 ): FilterQuery<V> {
   if (query.id === groupId) return query;
   const found = findFilterNode(query, groupId);
-  if (!found || !found.parent || !isFilterGroup(found.node)) return query;
+  if (!found?.parent || !isFilterGroup(found.node)) return query;
 
   const dissolved = found.node;
+  const { parent } = found;
   return rewriteGroup(
     query,
-    (group) => group.id === found.parent!.id,
+    (group) => group.id === parent.id,
     (group) => {
       const rules = [...group.rules];
       rules.splice(found.index, 1, ...dissolved.rules);
@@ -688,7 +692,8 @@ export function pruneFilterQuery<V>(query: FilterQuery<V>): FilterQuery<V> {
     }
 
     if (rules.length === 0) return null;
-    if (rules.length === 1 && isFilterGroup(rules[0])) return rules[0];
+    const [only] = rules;
+    if (rules.length === 1 && only && isFilterGroup(only)) return only;
     return { ...node, rules };
   };
 

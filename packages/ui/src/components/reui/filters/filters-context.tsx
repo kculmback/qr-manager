@@ -220,6 +220,7 @@ const FILTER_CONTROL_SIZES: Record<"sm" | "default", FilterControlSizes> = {
 export function filterControlSizes(state: {
   size: "sm" | "default";
 }): FilterControlSizes {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- see above: `size` reaches here from consumer props, outside the union.
   return FILTER_CONTROL_SIZES[state.size] ?? FILTER_CONTROL_SIZES.default;
 }
 

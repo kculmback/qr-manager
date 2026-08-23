@@ -92,7 +92,7 @@ export function computeFilterSchemaSignature<V, O>(
           ":" +
           field.id +
           "|" +
-          (field.label ?? "") +
+          field.label +
           "|" +
           (field.type ?? "") +
           "|" +
@@ -173,7 +173,7 @@ export function buildFilterIndex<V = unknown, O = unknown>(
 ): FilterIndex<V, O> {
   const signature =
     precomputedSignature ?? computeFilterSchemaSignature(fields);
-  if (previous && previous.signature === signature) return previous;
+  if (previous?.signature === signature) return previous;
   if (fields.length === 0) {
     return { ...(EMPTY_INDEX as unknown as FilterIndex<V, O>), signature };
   }
@@ -313,14 +313,22 @@ export function collapseFilterPath<V, O>(
     chain.map((field, index) => ({ value: String(index), label: field.label })),
     { maxSegments: options.maxSegments, collapse: options.collapse ?? "none" },
   );
-  return segments.map((segment) =>
-    segment.type === "node"
-      ? { type: "field" as const, field: chain[Number(segment.node.value)] }
-      : {
-          type: "ellipsis" as const,
-          hidden: segment.hidden.map((node) => chain[Number(node.value)]),
-        },
-  );
+  // The cascader values are the chain's own indices, so every lookup resolves;
+  // `flatMap` states that in the types rather than asserting it.
+  return segments.flatMap<FilterPathSegment<V, O>>((segment) => {
+    if (segment.type === "node") {
+      const field = chain[Number(segment.node.value)];
+      return field ? [{ type: "field" as const, field }] : [];
+    }
+    return [
+      {
+        type: "ellipsis" as const,
+        hidden: segment.hidden
+          .map((node) => chain[Number(node.value)])
+          .filter((field) => field !== undefined),
+      },
+    ];
+  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -520,7 +528,7 @@ export function findFilterSchemaIssues<V, O>(
       else if (seen.has(field.id)) duplicatePaths.push(label);
       seen.add(field.id);
 
-      if (field.selectable && field.fields && field.fields.length === 0) {
+      if (field.selectable && field.fields?.length === 0) {
         emptyBranches.push(label);
       }
 
@@ -537,4 +545,29 @@ export function findFilterSchemaIssues<V, O>(
 
   walk(fields, []);
   return { duplicatePaths, emptyIds, emptyBranches, unknownDefaultOperators };
+}
+
+/**
+ * Display coercion for a filter value whose shape the consumer chooses. Plain
+ * `String()` renders an object as "[object Object]", which is worse than blank
+ * in a chip or an input, so anything non-primitive goes through JSON instead.
+ */
+export function filterValueToDisplayString(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (
+    typeof value === "number" ||
+    typeof value === "bigint" ||
+    typeof value === "boolean"
+  ) {
+    return String(value);
+  }
+  if (value instanceof Date) return value.toISOString();
+  try {
+    // Typed `string`, but genuinely undefined for a symbol or a function - and
+    // a circular object or a throwing `toJSON` raises. A blank chip beats both.
+    return (JSON.stringify(value) as string | undefined) ?? "";
+  } catch {
+    return "";
+  }
 }

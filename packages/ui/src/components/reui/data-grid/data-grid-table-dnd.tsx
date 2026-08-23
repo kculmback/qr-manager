@@ -1,13 +1,7 @@
 "use client";
 
 import type { DragEndEvent, Modifier } from "@dnd-kit/core";
-import type {
-  Cell,
-  Header,
-  HeaderGroup,
-  Row,
-  Table,
-} from "@tanstack/react-table";
+import type { Cell, Header, HeaderGroup, Row } from "@tanstack/react-table";
 import type { CSSProperties, ReactNode } from "react";
 import {
   Fragment,
@@ -172,7 +166,7 @@ function DataGridTableDndBodyRows<TData extends object>({
   const { isLoading, props } = useDataGrid();
   const pagination = table.state.pagination;
 
-  if (props.loadingMode === "skeleton" && isLoading && pagination?.pageSize) {
+  if (props.loadingMode === "skeleton" && isLoading && pagination.pageSize) {
     return (
       <>
         {Array.from({ length: pagination.pageSize }).map((_, rowIndex) => (

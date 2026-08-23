@@ -565,7 +565,7 @@ export function Filters<V = unknown, O = unknown>({
   const announceReorder = React.useCallback(
     (next: FilterQuery<V>, id: string, fromParentId: string | null) => {
       const found = findFilterNode(next, id);
-      if (!found || !found.parent) return;
+      if (!found?.parent) return;
       const label = isFilterRule(found.node)
         ? formatFilterPath(
             latest.current.index,
@@ -790,7 +790,7 @@ export function Filters<V = unknown, O = unknown>({
   // Here rather than in each click handler, which is what lets the "arity none
   // skips the value step" branch live in the pure reducer.
   React.useEffect(() => {
-    if (!draft || draft.status !== "ready") return;
+    if (draft?.status !== "ready") return;
     if (!isFilterDraftCommittable(draft)) return;
 
     if (draft.ruleId) {

@@ -23,9 +23,9 @@ export type ChartConfig = Record<
   )
 >;
 
-type ChartContextProps = {
+interface ChartContextProps {
   config: ChartConfig;
-};
+}
 
 const ChartContext = React.createContext<ChartContextProps | null>(null);
 
@@ -152,7 +152,7 @@ function ChartTooltipContent({
     }
 
     const [item] = payload;
-    const key = `${labelKey ?? item?.dataKey ?? item?.name ?? "value"}`;
+    const key = getChartConfigKey(labelKey, item?.dataKey, item?.name);
     const itemConfig = getPayloadConfigFromPayload(config, item, key);
     const value =
       !labelKey && typeof label === "string"
@@ -200,9 +200,12 @@ function ChartTooltipContent({
         {payload
           .filter((item) => item.type !== "none")
           .map((item, index) => {
-            const key = `${nameKey ?? item.name ?? item.dataKey ?? "value"}`;
+            const key = getChartConfigKey(nameKey, item.name, item.dataKey);
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
-            const indicatorColor = color ?? item.payload?.fill ?? item.color;
+            // `payload` is `any` in Recharts' types; only `fill` is read.
+            const itemFill = (item.payload as { fill?: string } | undefined)
+              ?.fill;
+            const indicatorColor = color ?? itemFill ?? item.color;
 
             return (
               <div
@@ -212,8 +215,14 @@ function ChartTooltipContent({
                   indicator === "dot" && "items-center",
                 )}
               >
-                {formatter && item?.value !== undefined && item.name ? (
-                  formatter(item.value, item.name, item, index, item.payload)
+                {formatter && item.value !== undefined && item.name ? (
+                  formatter(
+                    item.value,
+                    item.name,
+                    item,
+                    index,
+                    item.payload as typeof payload,
+                  )
                 ) : (
                   <>
                     {itemConfig?.icon ? (
@@ -299,7 +308,7 @@ function ChartLegendContent({
       {payload
         .filter((item) => item.type !== "none")
         .map((item, index) => {
-          const key = `${nameKey ?? item.dataKey ?? "value"}`;
+          const key = getChartConfigKey(nameKey, item.dataKey);
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
           return (
@@ -325,6 +334,19 @@ function ChartLegendContent({
         })}
     </div>
   );
+}
+
+/**
+ * The first candidate usable as a `ChartConfig` key. Recharts types `dataKey`
+ * and `name` as `DataKey<any>`, so either can be an accessor function - and a
+ * stringified function is never a config key, it just yields a long miss.
+ */
+function getChartConfigKey(...candidates: unknown[]): string {
+  for (const candidate of candidates) {
+    if (typeof candidate === "string") return candidate;
+    if (typeof candidate === "number") return String(candidate);
+  }
+  return "value";
 }
 
 function getPayloadConfigFromPayload(

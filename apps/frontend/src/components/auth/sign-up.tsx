@@ -116,7 +116,7 @@ export function SignUp({
         resetFetchOptions();
       },
       onSuccess: (_data, { email }) => {
-        if (emailAndPassword?.requireEmailVerification) {
+        if (emailAndPassword.requireEmailVerification) {
           sessionStorage.setItem("better-auth-ui.verify-email", email);
           navigate({
             to: getAuthLinkURL(
@@ -141,8 +141,8 @@ export function SignUp({
   });
   const isPending = signInMutating + signUpMutating > 0;
 
-  const Captcha = plugins.find(
-    (plugin) => plugin.captchaComponent,
+  const Captcha = plugins.find((plugin) =>
+    Boolean(plugin.captchaComponent),
   )?.captchaComponent;
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -164,7 +164,7 @@ export function SignUp({
     const name = (formData.get("name") as string | null) ?? "";
     const email = formData.get("email") as string;
 
-    if (emailAndPassword?.confirmPassword && password !== confirmPassword) {
+    if (emailAndPassword.confirmPassword && password !== confirmPassword) {
       toast.add({
         type: "error",
         title: localization.auth.passwordsDoNotMatch,
@@ -210,7 +210,7 @@ export function SignUp({
   };
 
   const showSeparator =
-    emailAndPassword?.enabled && socialProviders && socialProviders.length > 0;
+    emailAndPassword.enabled && socialProviders && socialProviders.length > 0;
 
   return (
     <Card className={cn("w-full max-w-sm", className)}>
@@ -237,7 +237,7 @@ export function SignUp({
             </>
           )}
 
-          {emailAndPassword?.enabled && (
+          {emailAndPassword.enabled && (
             <form onSubmit={handleSubmit}>
               <FieldGroup>
                 {emailAndPassword.name !== false && (
@@ -346,14 +346,14 @@ export function SignUp({
                       }}
                       placeholder={localization.auth.passwordPlaceholder}
                       required
-                      minLength={emailAndPassword?.minPasswordLength}
-                      maxLength={emailAndPassword?.maxPasswordLength}
+                      minLength={emailAndPassword.minPasswordLength}
+                      maxLength={emailAndPassword.maxPasswordLength}
                       disabled={isPending}
                       onInvalid={(e) => {
                         e.preventDefault();
                         const el = e.target as HTMLInputElement;
-                        const min = emailAndPassword?.minPasswordLength;
-                        const max = emailAndPassword?.maxPasswordLength;
+                        const min = emailAndPassword.minPasswordLength;
+                        const max = emailAndPassword.maxPasswordLength;
                         const msg = el.validity.valueMissing
                           ? localization.auth.fieldRequired
                           : el.validity.tooShort
@@ -401,7 +401,7 @@ export function SignUp({
                   <PasswordStrengthMeter password={password} />
                 </Field>
 
-                {emailAndPassword?.confirmPassword && (
+                {emailAndPassword.confirmPassword && (
                   <Field data-invalid={!!fieldErrors.confirmPassword}>
                     <FieldLabel htmlFor="confirmPassword">
                       {localization.auth.confirmPassword}
@@ -426,14 +426,14 @@ export function SignUp({
                           localization.auth.confirmPasswordPlaceholder
                         }
                         required
-                        minLength={emailAndPassword?.minPasswordLength}
-                        maxLength={emailAndPassword?.maxPasswordLength}
+                        minLength={emailAndPassword.minPasswordLength}
+                        maxLength={emailAndPassword.maxPasswordLength}
                         disabled={isPending}
                         onInvalid={(e) => {
                           e.preventDefault();
                           const el = e.target as HTMLInputElement;
-                          const min = emailAndPassword?.minPasswordLength;
-                          const max = emailAndPassword?.maxPasswordLength;
+                          const min = emailAndPassword.minPasswordLength;
+                          const max = emailAndPassword.maxPasswordLength;
                           const msg = el.validity.valueMissing
                             ? localization.auth.fieldRequired
                             : el.validity.tooShort
@@ -533,7 +533,7 @@ export function SignUp({
           )}
         </div>
 
-        {emailAndPassword?.enabled && (
+        {emailAndPassword.enabled && (
           <div className="mt-4 flex w-full flex-col items-center gap-3">
             <FieldDescription className="text-center">
               {localization.auth.alreadyHaveAnAccount}{" "}

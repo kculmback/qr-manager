@@ -71,12 +71,12 @@ export function ChangeEmail({ className }: ChangeEmailProps) {
 
               {session ? (
                 <Input
-                  key={session?.user.email}
+                  key={session.user.email}
                   id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
-                  defaultValue={session?.user.email}
+                  defaultValue={session.user.email}
                   placeholder={localization.auth.emailPlaceholder}
                   disabled={isPending}
                   required

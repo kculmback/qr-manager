@@ -90,11 +90,9 @@ export function ActiveSession({ activeSession }: ActiveSessionProps) {
             {localization.settings.currentSession}
           </Badge>
         ) : (
-          activeSession.createdAt && (
-            <ItemDescription className="capitalize">
-              {timeAgo(activeSession.createdAt)}
-            </ItemDescription>
-          )
+          <ItemDescription className="capitalize">
+            {timeAgo(activeSession.createdAt)}
+          </ItemDescription>
         )}
       </ItemContent>
       <ItemActions>

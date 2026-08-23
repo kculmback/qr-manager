@@ -47,14 +47,13 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
   } = useAuth();
 
   const isHydrated = useIsHydrated();
-  const [email, setEmail] = useState(
-    (isHydrated && sessionStorage.getItem("better-auth-ui.verify-email")) || "",
-  );
+  // Derived rather than latched into state: `useIsHydrated` only flips to true
+  // after hydration, and `sessionStorage` does not exist during SSR - so the
+  // read has to happen on the render that follows, not in the initialiser.
+  const email = isHydrated
+    ? (sessionStorage.getItem("better-auth-ui.verify-email") ?? "")
+    : "";
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
-
-  useEffect(() => {
-    setEmail(sessionStorage.getItem("better-auth-ui.verify-email") ?? "");
-  }, []);
 
   useEffect(() => {
     if (cooldown <= 0 || !email) return;

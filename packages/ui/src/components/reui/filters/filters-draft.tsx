@@ -154,7 +154,7 @@ export function filterDraftReducer<V = unknown>(
       if (!state) return state;
       return {
         ...state,
-        value: action.value === undefined ? state.value : action.value,
+        value: action.value ?? state.value,
         status: "ready",
       };
 

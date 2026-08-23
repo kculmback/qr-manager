@@ -158,22 +158,22 @@ export function getColumnHeaderLabel<TData extends RowData, TValue>(
   return String(column.id);
 }
 
-export type DataGridApiFetchParams = {
+export interface DataGridApiFetchParams {
   pageIndex: number;
   pageSize: number;
   sorting?: SortingState;
   filters?: ColumnFiltersState;
   searchQuery?: string;
-};
+}
 
-export type DataGridApiResponse<T> = {
+export interface DataGridApiResponse<T> {
   data: T[];
   empty: boolean;
   pagination: {
     total: number;
     page: number;
   };
-};
+}
 
 /**
  * Everything `<DataGrid>` accepts except the two props the provider consumes
@@ -197,14 +197,14 @@ export interface DataGridContextProps<TData extends object> {
   autoSize?: DataGridAutoSizeController;
 }
 
-export type DataGridAutoSizeController = {
+export interface DataGridAutoSizeController {
   /**
    * Grows the first visible `meta.autoSize` column by the given free space.
    * Applies at most once per column id; safe to call from every viewport
    * measurement. Returns true when a sizing update was dispatched.
    */
   apply: (fillWidth: number) => boolean;
-};
+}
 
 function createDataGridAutoSizeController<TData extends object>(
   /**
@@ -286,12 +286,12 @@ function createDataGridAutoSizeController<TData extends object>(
   };
 }
 
-export type DataGridRequestParams = {
+export interface DataGridRequestParams {
   pageIndex: number;
   pageSize: number;
   sorting?: SortingState;
   columnFilters?: ColumnFiltersState;
-};
+}
 
 export interface DataGridProps<
   TFeatures extends TableFeatures,
@@ -518,11 +518,11 @@ function DataGrid<TFeatures extends TableFeatures, TData extends object>({
     ...props,
     tableLayout: {
       ...defaultProps.tableLayout,
-      ...(props.tableLayout || {}),
+      ...props.tableLayout,
     },
     tableClassNames: {
       ...defaultProps.tableClassNames,
-      ...(props.tableClassNames || {}),
+      ...props.tableClassNames,
     },
   };
 

@@ -1,32 +1,35 @@
-"use client"
+"use client";
 
+import type {
+  AuthSocialProvider,
+  AuthView,
+  OAuthPopupAuthClient,
+} from "@better-auth-ui/core";
+import type { ComponentProps } from "react";
 import {
-  type AuthSocialProvider,
-  type AuthView,
   authMutationKeys,
   getProviderId,
   getProviderName,
-  type OAuthPopupAuthClient
-} from "@better-auth-ui/core"
+} from "@better-auth-ui/core";
 import {
   renderProviderIcon,
   useAuth,
   useSignInOAuthPopup,
-  useSignInSocial
-} from "@better-auth-ui/react"
-import { useIsMutating } from "@tanstack/react-query"
-import type { ComponentProps } from "react"
+  useSignInSocial,
+} from "@better-auth-ui/react";
+import { useIsMutating } from "@tanstack/react-query";
 
-import { Button } from "@qr-manager/ui/components/button"
-import { Spinner } from "@qr-manager/ui/components/spinner"
-import { cn } from "@qr-manager/ui/lib/utils"
-import { LastUsedBadge } from "./last-login-method/last-used-badge"
+import { Button } from "@qr-manager/ui/components/button";
+import { Spinner } from "@qr-manager/ui/components/spinner";
+import { cn } from "@qr-manager/ui/lib/utils";
+
+import { LastUsedBadge } from "./last-login-method/last-used-badge";
 
 export type ProviderButtonProps = {
-  provider: AuthSocialProvider
-  display?: "full" | "name" | "icon"
-  view?: AuthView
-} & Omit<ComponentProps<typeof Button>, "onClick" | "children" | "disabled">
+  provider: AuthSocialProvider;
+  display?: "full" | "name" | "icon";
+  view?: AuthView;
+} & Omit<ComponentProps<typeof Button>, "onClick" | "children" | "disabled">;
 
 /**
  * Social provider sign-in button.
@@ -48,26 +51,26 @@ export function ProviderButton({
     localization,
     navigate,
     redirectTo,
-    socialSignInMode
-  } = useAuth()
+    socialSignInMode,
+  } = useAuth();
 
-  const callbackURL = `${baseURL}${redirectTo}`
+  const callbackURL = `${baseURL}${redirectTo}`;
 
   const { mutate: signInSocial, isPending: signInSocialPending } =
-    useSignInSocial(authClient)
+    useSignInSocial(authClient);
   const { mutate: signInPopup, isPending: signInPopupPending } =
-    useSignInOAuthPopup(authClient as OAuthPopupAuthClient)
+    useSignInOAuthPopup(authClient as OAuthPopupAuthClient);
 
-  const providerId = getProviderId(provider)
-  const providerIcon = renderProviderIcon(provider)
+  const providerId = getProviderId(provider);
+  const providerIcon = renderProviderIcon(provider);
 
   const signInMutating = useIsMutating({
-    mutationKey: authMutationKeys.signIn.all
-  })
+    mutationKey: authMutationKeys.signIn.all,
+  });
   const signUpMutating = useIsMutating({
-    mutationKey: authMutationKeys.signUp.all
-  })
-  const isPending = signInMutating + signUpMutating > 0
+    mutationKey: authMutationKeys.signUp.all,
+  });
+  const isPending = signInMutating + signUpMutating > 0;
 
   const handleSignIn = () => {
     if (socialSignInMode === "popup") {
@@ -75,15 +78,15 @@ export function ProviderButton({
         {
           provider: providerId,
           callbackURL,
-          requestSignUp: view === "signUp"
+          requestSignUp: view === "signUp",
         },
-        { onSuccess: () => navigate({ to: redirectTo }) }
-      )
-      return
+        { onSuccess: () => navigate({ to: redirectTo }) },
+      );
+      return;
     }
 
-    signInSocial({ provider: providerId, callbackURL })
-  }
+    signInSocial({ provider: providerId, callbackURL });
+  };
 
   return (
     <Button
@@ -99,7 +102,7 @@ export function ProviderButton({
       {display === "full"
         ? localization.auth.continueWith.replace(
             "{{provider}}",
-            getProviderName(provider)
+            getProviderName(provider),
           )
         : display === "name"
           ? getProviderName(provider)
@@ -111,5 +114,5 @@ export function ProviderButton({
 
       {view !== "signUp" && <LastUsedBadge method={providerId} floating />}
     </Button>
-  )
+  );
 }

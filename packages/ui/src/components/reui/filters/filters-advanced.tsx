@@ -170,7 +170,7 @@ function issueProps(
   column: FilterIssue["column"],
   message: string,
 ) {
-  if (!issue || issue.column !== column) return null;
+  if (issue?.column !== column) return null;
   return {
     "aria-invalid": true,
     "data-invalid": "",
@@ -354,7 +354,8 @@ const FOOTER_DROP_CLASS = cn(
 
 /** The cells a row owns ITSELF: a group's row contains its children's rows, so
  * a bare `querySelectorAll` would let ArrowRight walk into the first of them. */
-function ownCells(row: HTMLElement): HTMLElement[] {
+function ownCells(row: HTMLElement | undefined): HTMLElement[] {
+  if (!row) return [];
   return Array.from(
     row.querySelectorAll<HTMLElement>(`[${CELL_ATTRIBUTE}]`),
   ).filter((cell) => cell.closest<HTMLElement>(ROW_SELECTOR) === row);
@@ -553,9 +554,9 @@ function useActiveColumn(
   if (focused) {
     return segment && columns.includes(segment as FilterColumn)
       ? (segment as FilterColumn)
-      : columns[0];
+      : (columns[0] ?? null);
   }
-  return noFocus && isFirstRow ? columns[0] : null;
+  return noFocus && isFirstRow ? (columns[0] ?? null) : null;
 }
 
 function useFilterIssue(nodeId: string): FilterIssue | undefined {
@@ -1532,12 +1533,6 @@ export function FiltersAdvancedPanel<V, O>({
     [query, actions],
   );
 
-  /** Every issue, keyed by node: what the tree IS, drawn or not. */
-  const issueMap = React.useMemo(
-    () => new Map(issues.map((issue) => [issue.nodeId, issue])),
-    [issues],
-  );
-
   /** The issues a row may DRAW: the ones on a value committed once. */
   const visibleIssueMap = React.useMemo(() => {
     const visible = new Map<string, FilterIssue>();
@@ -1566,25 +1561,6 @@ export function FiltersAdvancedPanel<V, O>({
     if (visibleIssueMap.size <= before.count) return;
     actions.announce(actions.labels.issueSummary(visibleIssueMap.size));
   }, [visibleIssueMap, announcementSeq, actions]);
-
-  /** Sends focus to the first thing that needs it. Walked and not selected
-   * by id: a node id is consumer-supplied, and `CSS.escape` is not
-   * optional in a hand-built selector. */
-  const focusFirstIssue = React.useCallback(() => {
-    const first = issues[0];
-    const body = bodyRef.current;
-    if (!first || !body) return;
-    const row = Array.from(
-      body.querySelectorAll<HTMLElement>(ROW_SELECTOR),
-    ).find((candidate) => candidate.dataset.nodeId === first.nodeId);
-    if (!row) return;
-    // A group's issue is drawn on the add button that resolves it.
-    const column = first.column === "group" ? "add" : first.column;
-    const target = ownCells(row).find(
-      (cell) => cell.getAttribute(CELL_ATTRIBUTE) === column,
-    );
-    target?.focus();
-  }, [issues]);
 
   /* ---------------------------- focus recovery ---------------------------- */
 
@@ -1744,8 +1720,8 @@ export function FiltersAdvancedPanel<V, O>({
       return focus(event.ctrlKey ? ownCells(rows[0])[0] : cells[0]);
     }
     if (event.key === "End") {
-      const scope = event.ctrlKey ? ownCells(rows[rows.length - 1]) : cells;
-      return focus(scope[scope.length - 1]);
+      const scope = event.ctrlKey ? ownCells(rows.at(-1)) : cells;
+      return focus(scope.at(-1));
     }
 
     if (event.key === "Backspace" || event.key === "Delete") {

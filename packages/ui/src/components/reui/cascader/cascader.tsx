@@ -189,8 +189,10 @@ function shallowEqualItemLists(
   b: readonly object[],
 ): boolean {
   if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i] && !shallowEqualRecords(a[i], b[i])) return false;
+  for (const [i, item] of a.entries()) {
+    const other = b[i];
+    if (other === undefined) return false;
+    if (item !== other && !shallowEqualRecords(item, other)) return false;
   }
   return true;
 }
@@ -209,7 +211,7 @@ function useShallowStable<V>(
     value !== null &&
     typeof stable === "object" &&
     stable !== null;
-  if (comparable && equal(value as V & object, stable as V & object)) {
+  if (comparable && equal(value, stable)) {
     return stable;
   }
   setStable(value);
@@ -854,7 +856,7 @@ function Cascader<T>({
   const levels = React.useMemo(() => {
     if (mode === "tree") return [CASCADER_ROOT_KEY, ...expandedList];
     if (mode === "columns") return [CASCADER_ROOT_KEY, ...path];
-    return [path.length ? path[path.length - 1] : CASCADER_ROOT_KEY];
+    return [path.at(-1) ?? CASCADER_ROOT_KEY];
   }, [mode, path, expandedList]);
 
   // A SIBLING of the index build, never a step inside it: the build stays pure
@@ -1818,11 +1820,7 @@ function Cascader<T>({
         }
         if (swept > 0) {
           announceNotice(
-            currentLabels.cascadeAnnouncement(
-              node.label ?? node.value,
-              swept,
-              selecting,
-            ),
+            currentLabels.cascadeAnnouncement(node.label, swept, selecting),
           );
         }
         setQuery("");
@@ -1954,7 +1952,7 @@ function Cascader<T>({
 
       // Captured for the wrapped `onOpenChange`, which runs synchronously
       // inside `setOpen`, so a ref written just before the call is exact.
-      openReasonRef.current = details.reason ?? "none";
+      openReasonRef.current = details.reason;
       setOpen(nextOpen);
 
       if (!nextOpen) {
@@ -2111,7 +2109,8 @@ function Cascader<T>({
 
   const comboboxValue = React.useMemo(() => {
     if (multiple) return selectedValues.map(resolveNode);
-    return selectedValues.length ? resolveNode(selectedValues[0]) : null;
+    const [first] = selectedValues;
+    return first === undefined ? null : resolveNode(first);
   }, [multiple, selectedValues, resolveNode]);
 
   return (
@@ -2156,10 +2155,10 @@ function Cascader<T>({
                  an explicit row `index` legal. `items`/`filteredItems` stay full:
                  they size `listRef`, or ArrowDown stops at the last RENDERED row. */
               virtualized={virtualized}
-              itemToStringValue={(item: CascaderNode<T>) => item?.value ?? ""}
-              itemToStringLabel={(item: CascaderNode<T>) => item?.label ?? ""}
+              itemToStringValue={(item: CascaderNode<T>) => item.value}
+              itemToStringLabel={(item: CascaderNode<T>) => item.label}
               isItemEqualToValue={(a: CascaderNode<T>, b: CascaderNode<T>) =>
-                a?.value === b?.value
+                a.value === b.value
               }
               // Fires on every arrow key AND every pointer move, so it must
               // never call setState. The ref serves keyboard handlers, the
@@ -2814,7 +2813,7 @@ function CascaderEmpty({
   const { labels, retryLevel } = useCascaderActions();
   const { query, path, searchState } = useCascaderState();
   // The level whose emptiness is on screen; tree always shows the root.
-  const levelKey = path.length ? path[path.length - 1] : CASCADER_ROOT_KEY;
+  const levelKey = path.at(-1) ?? CASCADER_ROOT_KEY;
   const loadState = useCascaderLoadState(levelKey);
   const state = query.trim() ? (searchState ?? loadState) : loadState;
 

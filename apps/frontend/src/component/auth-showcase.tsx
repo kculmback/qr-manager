@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { Button } from "@qr-manager/ui/components/button";
 
-import { authClient } from "~/auth/client";
+import { authClient } from "~/lib/auth/client";
 
 export function AuthShowcase() {
   const { data: session } = authClient.useSession();

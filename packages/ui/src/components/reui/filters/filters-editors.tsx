@@ -51,6 +51,7 @@ import {
 import {
   applyFilterExclusiveSelection,
   filterFilterOptions,
+  filterValueToDisplayString,
   joinFilterPath,
   normalizeFilterQuery,
   warnFilterOnce,
@@ -77,7 +78,9 @@ const IDLE: OptionsInternalState<never> = {
 };
 
 /** Stable no-op subscription, for a hook running outside a `Filters` root. */
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => {
+  // The store never changes, so the subscription has nothing to tear down.
+};
 const zeroVersion = () => 0;
 
 /**
@@ -190,7 +193,7 @@ export function useFilterOptions<V, O>(
         }));
       } catch (error) {
         if (id !== requestId.current) return;
-        if ((error as Error)?.name === "AbortError") return;
+        if ((error as Error).name === "AbortError") return;
         setState((previous) => ({
           ...previous,
           loading: false,
@@ -451,7 +454,7 @@ export function FilterTextEditor<V, O>({
       <ButtonGroup className={EDITOR_FIELD_GROUP}>
         <Input
           {...autoFocusProps}
-          value={(value as string) ?? ""}
+          value={(value as string | undefined) ?? ""}
           placeholder={field.placeholder ?? labels.valuePlaceholder}
           aria-label={field.label}
           onChange={(event) => onValueChange(event.target.value as V)}
@@ -538,7 +541,7 @@ export function FilterRangeEditor<V, O>({
         <Input
           {...autoFocusProps}
           type="number"
-          value={tuple[0] === undefined ? "" : String(tuple[0])}
+          value={filterValueToDisplayString(tuple[0])}
           aria-label={labels.rangeFrom(field.label)}
           onChange={(event) => update(0, event.target.value)}
           onKeyDown={onKeyDown}
@@ -548,7 +551,7 @@ export function FilterRangeEditor<V, O>({
         </span>
         <Input
           type="number"
-          value={tuple[1] === undefined ? "" : String(tuple[1])}
+          value={filterValueToDisplayString(tuple[1])}
           aria-label={labels.rangeTo(field.label)}
           onChange={(event) => update(1, event.target.value)}
           onKeyDown={onKeyDown}
@@ -865,7 +868,7 @@ export function FilterMenu({
           ]
         : [chosen, rest, exclusive];
 
-    const rows = [...ordered[0], ...ordered[1], ...ordered[2]];
+    const rows = ordered.flat();
 
     return {
       chosenCount: chosen.length,
@@ -906,12 +909,11 @@ export function FilterMenu({
     // Rows rewritten, not rebuilt: copying 4,000 objects would undo the split.
     const next = partitioned.nodes.slice();
     for (const index of marks) {
+      const row = next[index];
+      if (!row) continue;
       // MERGED, never replaced: the two boundaries usually fall on one row, and
       // overwriting `data` dropped the flag the accessible name is built from.
-      next[index] = {
-        ...next[index],
-        data: { ...next[index].data, divider: true },
-      };
+      next[index] = { ...row, data: { ...row.data, divider: true } };
     }
     return next;
   }, [partitioned, dividerAt, exclusiveDividerAt]);
@@ -1028,7 +1030,9 @@ export function FilterMenu({
     // `setOpen(false)` of a single-select commit cannot dismiss the popover.
     inline: true,
     open: true,
-    onOpenChange: () => {},
+    onOpenChange: () => {
+      // See above: the popover is pinned open, so a close request is ignored.
+    },
     items: nodes,
     inputValue: currentQuery,
     onInputValueChange: setQuery,

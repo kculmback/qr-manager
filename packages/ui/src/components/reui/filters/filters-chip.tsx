@@ -57,6 +57,7 @@ import {
   collapseFilterPath,
   FILTER_MENU_CLASS,
   FILTER_MENU_LABEL_CLASS,
+  filterValueToDisplayString,
   formatFilterPath,
   getFilterField,
   getFilterFieldChain,
@@ -86,7 +87,9 @@ type ChipSegment = "operator" | "value" | "menu";
 
 /** The ref half of `autoFocusProps`: a CALLBACK ref, the one shape an editor
  *  can spread onto any element without a cast, and a no-op here. */
-const noopAutoFocusRef: React.RefCallback<HTMLElement> = () => {};
+const noopAutoFocusRef: React.RefCallback<HTMLElement> = () => {
+  // Claims the ref so nothing else auto-focuses the node.
+};
 
 function defaultValueDisplay<V>(
   value: V | undefined,
@@ -108,14 +111,18 @@ function defaultValueDisplay<V>(
 
   if (getFilterArity(operator) === "range" && Array.isArray(value)) {
     const [from, to] = value as unknown[];
-    return labels.valueRange(String(from ?? ""), String(to ?? ""));
+    return labels.valueRange(
+      filterValueToDisplayString(from),
+      filterValueToDisplayString(to),
+    );
   }
 
   if (Array.isArray(value)) {
     const values = value as string[];
     if (values.length === 0) return emptyLabel;
-    if (values.length === 1) {
-      return resolveOption(values[0])?.label ?? String(values[0]);
+    const [only] = values;
+    if (values.length === 1 && only !== undefined) {
+      return resolveOption(only)?.label ?? String(only);
     }
     return labels.valueCount(values.length);
   }
@@ -413,7 +420,7 @@ function FilterValueEditor<V, O>({
     },
     commit: (next, commitOptions) => {
       actions.updateRule(rule.id, {
-        value: (next === undefined ? draft : next) as V,
+        value: (next ?? draft) as V,
       });
       // A multi-select commits per toggle and asks to stay put; others dismiss.
       if (commitOptions?.close === false) return;
@@ -561,7 +568,6 @@ export function FilterOperatorPopover<V, O>({
    *  unmount. Clearing it in `release` would break that twin only. */
   const handoff = React.useRef(false);
   const operators = actions.resolveOperators(field);
-  const operator = getFilterOperator(operators, rule.operator);
 
   // Memoized because the array IS the menu's identity: the cascader rebuilds
   // its index per `items` identity, so a fresh array rebuilds it per keystroke.
@@ -712,7 +718,8 @@ export function FilterMoveToMenuItems({ nodeId }: { nodeId: string }) {
   // this is the tree the user is looking at.
   const query = actions.getQuery();
   const found = findFilterNode(query, nodeId);
-  if (!found || !found.parent) return null;
+  if (!found?.parent) return null;
+  const { parent } = found;
 
   const destinations: { id: string; label: string; size: number }[] = [];
   if (found.parent.id !== query.id) {
@@ -737,7 +744,7 @@ export function FilterMoveToMenuItems({ nodeId }: { nodeId: string }) {
       // move - it would detach the subtree and leave a cycle - so offering it
       // would be a menu row that quietly does nothing.
       const within = inside || child.id === nodeId;
-      if (!within && child.id !== found.parent!.id) {
+      if (!within && child.id !== parent.id) {
         destinations.push({
           id: child.id,
           label: actions.labels.moveToGroup(position),

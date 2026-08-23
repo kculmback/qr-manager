@@ -1,6 +1,6 @@
 "use client";
 
-import type { Column, Row, Table } from "@tanstack/react-table";
+import type { Column, Row } from "@tanstack/react-table";
 import type {
   VirtualItem,
   Virtualizer,
@@ -39,10 +39,10 @@ import {
 import { Spinner } from "@qr-manager/ui/components/spinner";
 import { cn } from "@qr-manager/ui/lib/utils";
 
-type DataGridTableVirtualScrollElements = {
+interface DataGridTableVirtualScrollElements {
   containerElement: HTMLDivElement | null;
   scrollElement: HTMLElement | null;
-};
+}
 
 type DataGridTableVirtualizerInstance = Virtualizer<
   HTMLElement,
@@ -51,7 +51,7 @@ type DataGridTableVirtualizerInstance = Virtualizer<
 
 type DataGridTableVirtualScrollAlignment = "auto" | "center" | "start" | "end";
 
-type DataGridTableVirtualScrollRequest = {
+interface DataGridTableVirtualScrollRequest {
   align: DataGridTableVirtualScrollAlignment;
   behavior: ScrollBehavior;
   containerElement: HTMLDivElement;
@@ -60,7 +60,7 @@ type DataGridTableVirtualScrollRequest = {
   rowId: string | undefined;
   rowIndex: number;
   scrollElement: HTMLElement;
-};
+}
 
 function isSameDataGridTableScrollRequest(
   previous: DataGridTableVirtualScrollRequest | null,
@@ -655,7 +655,7 @@ function DataGridTableVirtual<TData extends object>({
 
       if (!row) return index;
 
-      return customGetItemKey?.(index, row) ?? row.id ?? index;
+      return customGetItemKey?.(index, row) ?? row.id;
     },
     [centerRows, customGetItemKey],
   );
@@ -836,7 +836,7 @@ function DataGridTableVirtual<TData extends object>({
 
     if (lastItem.index >= centerRows.length - 1 - resolvedFetchMoreOffset) {
       fetchMoreFiredAtCountRef.current = centerRows.length;
-      onFetchMore?.();
+      onFetchMore();
     }
   }, [
     centerRows.length,

@@ -1,45 +1,49 @@
-import { isTwoFactorRedirect } from "@better-auth-ui/core/plugins/two-factor"
-import { useAuth, useSession, useSignInEmail } from "@better-auth-ui/react"
-import { type FormEvent, useState } from "react"
-import { Button } from "@qr-manager/ui/components/button"
+import type { FormEvent } from "react";
+import { useState } from "react";
+import { isTwoFactorRedirect } from "@better-auth-ui/core/plugins/two-factor";
+import { useAuth, useSession, useSignInEmail } from "@better-auth-ui/react";
+
+import { Button } from "@qr-manager/ui/components/button";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
-  FieldLabel
-} from "@qr-manager/ui/components/field"
-import { Input } from "@qr-manager/ui/components/input"
-import { Spinner } from "@qr-manager/ui/components/spinner"
-import { useSignInContinuation } from "~/lib/auth/use-sign-in-continuation"
+  FieldLabel,
+} from "@qr-manager/ui/components/field";
+import { Input } from "@qr-manager/ui/components/input";
+import { Spinner } from "@qr-manager/ui/components/spinner";
+
+import { asAuthError } from "~/lib/auth/errors";
+import { useSignInContinuation } from "~/lib/auth/use-sign-in-continuation";
 
 export interface FreshSessionPromptProps {
-  onFresh: () => unknown | Promise<unknown>
+  onFresh: () => unknown;
 }
 
 export function FreshSessionPrompt({ onFresh }: FreshSessionPromptProps) {
-  const auth = useAuth()
-  const session = useSession(auth.authClient)
-  const continueSignIn = useSignInContinuation()
-  const [password, setPassword] = useState("")
+  const auth = useAuth();
+  const session = useSession(auth.authClient);
+  const continueSignIn = useSignInContinuation();
+  const [password, setPassword] = useState("");
   const signIn = useSignInEmail(auth.authClient, {
     onError: () => setPassword(""),
     onSuccess: async (data) => {
       if (isTwoFactorRedirect(data)) {
-        continueSignIn(data)
-        return
+        continueSignIn(data);
+        return;
       }
-      setPassword("")
-      await onFresh()
-    }
-  })
+      setPassword("");
+      await onFresh();
+    },
+  });
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const email = session.data?.user.email
-    if (!email) return
-    signIn.mutate({ email, password })
-  }
+    event.preventDefault();
+    const email = session.data?.user.email;
+    if (!email) return;
+    signIn.mutate({ email, password });
+  };
 
   return (
     <div className="p-4">
@@ -52,7 +56,7 @@ export function FreshSessionPrompt({ onFresh }: FreshSessionPromptProps) {
             {auth.localization.settings.freshSessionDescription}
           </FieldDescription>
         </div>
-        {auth.emailAndPassword?.enabled ? (
+        {auth.emailAndPassword.enabled ? (
           <form className="flex flex-col gap-3" onSubmit={submit}>
             <Field data-invalid={signIn.isError}>
               <FieldLabel htmlFor="fresh-session-password">
@@ -69,7 +73,8 @@ export function FreshSessionPrompt({ onFresh }: FreshSessionPromptProps) {
               />
               {signIn.error && (
                 <FieldError>
-                  {signIn.error.error?.message ?? signIn.error.message}
+                  {asAuthError(signIn.error).error?.message ??
+                    signIn.error.message}
                 </FieldError>
               )}
             </Field>
@@ -82,7 +87,7 @@ export function FreshSessionPrompt({ onFresh }: FreshSessionPromptProps) {
           <Button
             onClick={() =>
               auth.navigate({
-                to: `${auth.basePaths.auth}/${auth.viewPaths.auth.signIn}`
+                to: `${auth.basePaths.auth}/${auth.viewPaths.auth.signIn}`,
               })
             }
           >
@@ -91,5 +96,5 @@ export function FreshSessionPrompt({ onFresh }: FreshSessionPromptProps) {
         )}
       </FieldGroup>
     </div>
-  )
+  );
 }

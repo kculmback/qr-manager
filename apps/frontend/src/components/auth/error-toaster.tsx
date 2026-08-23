@@ -1,4 +1,3 @@
-import type { BetterFetchError } from "better-auth/react";
 import { useEffect } from "react";
 import {
   authMutationKeys,
@@ -15,6 +14,8 @@ import {
 
 import { toast } from "@qr-manager/ui/components/toast";
 
+import { asAuthError } from "~/lib/auth/errors";
+
 export function ErrorToaster() {
   const queryClient = useQueryClient();
 
@@ -28,9 +29,9 @@ export function ErrorToaster() {
       if (!matchQuery({ queryKey: authQueryKeys.all }, query)) return;
       if (isSessionNotFreshError(error)) return;
 
-      const err = error as BetterFetchError;
-      if (err?.error?.code === "EMAIL_NOT_VERIFIED") return;
-      if (err?.error)
+      const err = asAuthError(error);
+      if (err.error?.code === "EMAIL_NOT_VERIFIED") return;
+      if (err.error)
         toast.add({
           type: "error",
           title: err.error.message,
@@ -63,7 +64,7 @@ export function ErrorToaster() {
       // password field, so a toast would just repeat it.
       if (isPasswordCompromisedError(error)) return;
 
-      const err = error as BetterFetchError;
+      const err = asAuthError(error);
       if (
         err.error?.code === "EMAIL_NOT_VERIFIED" &&
         !matchMutation({ mutationKey: oneTapMutationKeys.prompt }, mutation)

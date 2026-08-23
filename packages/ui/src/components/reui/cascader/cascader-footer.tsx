@@ -661,7 +661,7 @@ function CascaderSubmenuContent({
         ...items.slice(0, state.buffer.length > 1 ? from : from + 1),
       ];
       const hit = ordered.find((item) =>
-        (item.textContent ?? "").trim().toLowerCase().startsWith(prefix),
+        item.textContent.trim().toLowerCase().startsWith(prefix),
       );
       if (hit) {
         event.preventDefault();

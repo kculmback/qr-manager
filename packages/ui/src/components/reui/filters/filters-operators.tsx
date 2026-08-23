@@ -138,7 +138,7 @@ export function resolveFilterOperators<V, O>(
 ): FilterOperator[] {
   if (typeof field.operators === "function") return field.operators(field);
   if (field.operators) return field.operators;
-  return catalog[field.type ?? DEFAULT_FILTER_VALUE_TYPE] ?? catalog.text;
+  return catalog[field.type ?? DEFAULT_FILTER_VALUE_TYPE];
 }
 
 export function visibleFilterOperators(

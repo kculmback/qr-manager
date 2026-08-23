@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import type { ThemeMode } from "@qr-manager/ui/components/theme";
 import {
@@ -15,7 +15,6 @@ import { AuthProvider } from "./auth/auth-provider";
 
 export function Providers({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const { slug } = useParams({ strict: false });
 
   return (
     <ThemeProvider>

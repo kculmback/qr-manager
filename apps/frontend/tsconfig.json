@@ -5,9 +5,9 @@
     "jsx": "preserve",
     "paths": {
       "~/*": ["./src/*"],
-      "@qr-manager/ui/*": ["../../packages/ui/src/*"],
-    },
+      "@qr-manager/ui/*": ["../../packages/ui/src/*"]
+    }
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules"]
 }

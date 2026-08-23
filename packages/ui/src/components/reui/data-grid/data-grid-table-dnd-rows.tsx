@@ -11,7 +11,7 @@ import type {
   UniqueIdentifier,
 } from "@dnd-kit/core";
 import type { SortingStrategy } from "@dnd-kit/sortable";
-import type { Cell, HeaderGroup, Row, Table } from "@tanstack/react-table";
+import type { Cell, HeaderGroup, Row } from "@tanstack/react-table";
 import type { CSSProperties, ReactNode } from "react";
 import {
   createContext,
@@ -23,6 +23,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import {
   closestCenter,
@@ -39,7 +40,6 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { flexRender } from "@tanstack/react-table";
@@ -85,7 +85,7 @@ const SortableRowContext = createContext<Pick<
  * `active.data.current` / `over.data.current` in any drag event. Cross-parent
  * drops can be resolved from it without re-deriving the shape of the table.
  */
-type DataGridTableDndRowData = {
+interface DataGridTableDndRowData {
   type: "data-grid-row";
   /** Tree depth, 0 for root rows. */
   depth: number;
@@ -93,7 +93,7 @@ type DataGridTableDndRowData = {
   index: number;
   /** Parent row id, or null for root rows. */
   parentId: string | null;
-};
+}
 
 /**
  * Per-row render slot for drop indicators and depth guides. The returned node
@@ -105,6 +105,11 @@ type DataGridTableDndRowDecoration<TData extends object> = (context: {
   isDragging: boolean;
   isOver: boolean;
 }) => ReactNode;
+
+/** `document.body` never changes identity, so there is nothing to subscribe to. */
+const subscribeToPortalTarget = () => () => {
+  // no-op
+};
 
 function DataGridTableDndRowHandle({
   className,
@@ -333,7 +338,7 @@ function DataGridTableDndRowsBody<TData extends object>({
   const { isLoading, props } = useDataGrid();
   const pagination = table.state.pagination;
 
-  if (props.loadingMode === "skeleton" && isLoading && pagination?.pageSize) {
+  if (props.loadingMode === "skeleton" && isLoading && pagination.pageSize) {
     return (
       <>
         {Array.from({ length: pagination.pageSize }).map((_, rowIndex) => (
@@ -444,14 +449,14 @@ function DataGridTableDndRows<TData extends object>({
   // lands offset by that ancestor's own top/left, and the container clamp
   // below mis-clamps too, because its rects are measured in viewport space.
   //
-  // Resolved in an effect rather than read at render so the server and the
-  // first client render agree. A drag cannot start before hydration, so the
-  // overlay being absent for one frame costs nothing.
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setPortalTarget(document.body);
-  }, []);
+  // Read through `useSyncExternalStore` rather than an effect so the server and
+  // the first client render agree on `null`. A drag cannot start before
+  // hydration, so the overlay being absent for one frame costs nothing.
+  const portalTarget = useSyncExternalStore(
+    subscribeToPortalTarget,
+    () => document.body,
+    () => null,
+  );
   // The row being carried, plus the column widths measured off the header the
   // moment the drag starts. The clone lives outside the table, so it has no
   // columns of its own and has to be told what they are.

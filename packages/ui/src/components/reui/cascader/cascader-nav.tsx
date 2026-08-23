@@ -143,7 +143,7 @@ function CascaderBreadcrumb({
   // `collapseCascaderPath` never collapses the last node away, so this is
   // always the final segment - derived rather than assumed, so a `collapse`
   // mode that ever changes that cannot mark an ancestor as the current page.
-  const currentValue = nodes.length ? nodes[nodes.length - 1].value : null;
+  const currentValue = nodes.at(-1)?.value ?? null;
 
   // See `CascaderBack`: the hide check must not short-circuit past `useRender`.
   const hidden = mode !== "drill" || nodes.length === 0;
@@ -305,7 +305,9 @@ function CascaderInput({
     };
 
     let current = rowIndex();
-    for (let step = 0; step < treeRows.length; step += 1) {
+    // Counted down rather than up: `step` bounds the attempts at one per row,
+    // it never indexes `treeRows`.
+    for (let step = treeRows.length; step > 0; step -= 1) {
       if (current === -1 || current === targetIndex) return;
       const key = current > targetIndex ? "ArrowUp" : "ArrowDown";
       field.dispatchEvent(
@@ -346,6 +348,7 @@ function CascaderInput({
     );
     if (rowIndex < 0) return;
     const row = treeRows[rowIndex];
+    if (!row) return;
 
     if (forward) {
       if (!row.branch) return;
@@ -359,7 +362,7 @@ function CascaderInput({
       // `flattenCascaderTree` emits children right after their parent, so the
       // first child is the next row. The depth check covers an empty branch.
       const child = treeRows[rowIndex + 1];
-      if (child && child.depth === row.depth + 1) {
+      if (child?.depth === row.depth + 1) {
         moveHighlightTo(field, rowIndex + 1);
       }
       return;
@@ -571,10 +574,12 @@ function CascaderValue({
   } else if (display === "count" || (multiple && selectedValues.length > 1)) {
     content = labels.selectedCount(selectedValues.length);
   } else {
-    const leaf = path[path.length - 1] ?? selected[0];
+    const leaf = path.at(-1) ?? selected[0];
     const segments =
       display === "leaf"
-        ? [{ type: "node" as const, node: leaf }]
+        ? leaf
+          ? [{ type: "node" as const, node: leaf }]
+          : []
         : collapseCascaderPath(path, { maxSegments, collapse });
 
     content = (
@@ -609,7 +614,7 @@ function CascaderValue({
                   i < segments.length - 1 && "text-muted-foreground",
                 )}
               >
-                {segment.node?.label}
+                {segment.node.label}
               </span>
             )}
           </React.Fragment>

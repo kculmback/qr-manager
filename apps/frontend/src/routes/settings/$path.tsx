@@ -6,7 +6,7 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 import { Settings } from "~/components/auth/settings/settings";
 import { authClient } from "~/lib/auth/client";
 
-const validSettingsPaths = [...Object.values(viewPaths.settings)];
+const validSettingsPaths = [...Object.values({ ...viewPaths.settings })];
 
 export const Route = createFileRoute("/settings/$path")({
   async beforeLoad({ params: { path }, context: { queryClient }, location }) {
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/settings/$path")({
 
     const ensureSessionIso = createIsomorphicFn()
       .server(() =>
-        ensureSessionFn(queryClient, authClient, {
+        ensureSession(queryClient, authClient, {
           fetchOptions: { headers: getRequestHeaders() },
         }),
       )

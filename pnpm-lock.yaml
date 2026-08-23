@@ -506,6 +506,9 @@ importers:
       '@types/react':
         specifier: catalog:react19
         version: 19.2.18
+      '@types/react-dom':
+        specifier: catalog:react19
+        version: 19.2.4(@types/react@19.2.18)
       eslint:
         specifier: 'catalog:'
         version: 9.38.0(jiti@2.7.0)
@@ -515,6 +518,9 @@ importers:
       react:
         specifier: catalog:react19
         version: 19.2.8
+      react-dom:
+        specifier: catalog:react19
+        version: 19.2.8(react@19.2.8)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.3

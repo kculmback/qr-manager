@@ -23,11 +23,17 @@ import {
 } from "@qr-manager/ui/components/item";
 import { Skeleton } from "@qr-manager/ui/components/skeleton";
 import { Spinner } from "@qr-manager/ui/components/spinner";
+import { toast } from "@qr-manager/ui/components/toast";
 import { cn } from "@qr-manager/ui/lib/utils";
 
 export interface LinkedAccountProps {
   account?: Account;
-  provider: AuthSocialProvider | string;
+  /**
+   * The `& {}` keeps the known provider ids as editor suggestions instead of
+   * letting `string` swallow the union - a custom OAuth provider is still a
+   * valid id here, so the type cannot be narrowed to the built-in list.
+   */
+  provider: AuthSocialProvider | (string & {});
 }
 
 /**
@@ -72,8 +78,8 @@ export function LinkedAccount({ account, provider }: LinkedAccountProps) {
   const displayName =
     accountData?.login ||
     accountData?.username ||
-    accountInfo?.user?.email ||
-    accountInfo?.user?.name ||
+    accountInfo?.user.email ||
+    accountInfo?.user.name ||
     account?.accountId;
 
   return (

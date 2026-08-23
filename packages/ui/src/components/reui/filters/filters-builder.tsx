@@ -135,7 +135,9 @@ export function FilterFieldPicker<V, O>({
          single-select commit's `setOpen(false)` dismisses nothing. That avoids
          the `multiple` plus `max` workaround and its `aria-multiselectable`. */
       open
-      onOpenChange={() => {}}
+      onOpenChange={() => {
+        // Held open by the builder; the popover cannot dismiss itself.
+      }}
       items={items}
       /* No `selectable` predicate: LEAVES commit, branches navigate. Honouring
          a branch's opt-in made one click mean both drill and commit. */

@@ -26,21 +26,21 @@ const SCROLLBAR_THUMB_CLASSNAME = "bg-border rounded-full relative flex-1";
 
 type DataGridScrollAreaOrientation = "horizontal" | "vertical" | "both";
 
-type ScrollbarMetrics = {
+interface ScrollbarMetrics {
   hasVerticalOverflow: boolean;
   headerHeight: number;
   horizontalScrollbarSize: number;
   thumbHeight: number;
   thumbTop: number;
   trackHeight: number;
-};
+}
 
-type ObservedElements = {
+interface ObservedElements {
   header: HTMLElement | null;
   horizontalScrollbar: HTMLElement | null;
   table: HTMLElement | null;
   tableViewport: HTMLElement | null;
-};
+}
 
 type DataGridScrollAreaProps = Omit<
   ScrollAreaPrimitive.Root.Props,
@@ -134,14 +134,19 @@ function DataGridScrollArea({
     if (node) applyMetrics(node, metricsRef.current);
   }, []);
 
-  const resetMetrics = useCallback(() => {
+  // The DOM half on its own, so the effect that runs when the custom scrollbar
+  // is switched off can clear the overlay without a synchronous setState.
+  const resetMetricsGeometry = useCallback(() => {
     if (!areMetricsEqual(INITIAL_METRICS, metricsRef.current)) {
       metricsRef.current = INITIAL_METRICS;
       if (overlayRef.current) applyMetrics(overlayRef.current, INITIAL_METRICS);
     }
-
-    setHasCustomVerticalOverflow((prev) => (prev ? false : prev));
   }, []);
+
+  const resetMetrics = useCallback(() => {
+    resetMetricsGeometry();
+    setHasCustomVerticalOverflow((prev) => (prev ? false : prev));
+  }, [resetMetricsGeometry]);
 
   const syncCustomVerticalScrollbar = useCallback(() => {
     const container = containerRef.current;
@@ -228,7 +233,7 @@ function DataGridScrollArea({
     if (!container || !viewport) return;
 
     if (!usesCustomVerticalScrollbar) {
-      resetMetrics();
+      resetMetricsGeometry();
       return;
     }
 
@@ -254,18 +259,14 @@ function DataGridScrollArea({
 
     const resolveObservedElements = () => {
       observedElementsRef.current = {
-        header: container.querySelector(
-          '[data-slot="data-grid-table"] thead',
-        ) as HTMLElement | null,
+        header: container.querySelector('[data-slot="data-grid-table"] thead'),
         horizontalScrollbar: container.querySelector(
           '[data-slot="data-grid-scrollbar"][data-orientation="horizontal"]',
-        ) as HTMLElement | null,
-        table: container.querySelector(
-          '[data-slot="data-grid-table"]',
-        ) as HTMLElement | null,
+        ),
+        table: container.querySelector('[data-slot="data-grid-table"]'),
         tableViewport: container.querySelector(
           '[data-slot="data-grid-table-viewport"]',
-        ) as HTMLElement | null,
+        ),
       };
 
       observeElement(observedElementsRef.current.header);
@@ -307,7 +308,7 @@ function DataGridScrollArea({
     };
   }, [
     clearDragState,
-    resetMetrics,
+    resetMetricsGeometry,
     syncCustomVerticalScrollbar,
     usesCustomVerticalScrollbar,
   ]);
@@ -402,7 +403,11 @@ function DataGridScrollArea({
         // Styling hook: present while the sticky-header scroll mode detects
         // vertical overflow, so consumers can style scrollable vs short
         // grids with a plain ancestor attribute selector.
-        data-overflow-vertical={hasCustomVerticalOverflow ? "true" : undefined}
+        data-overflow-vertical={
+          usesCustomVerticalScrollbar && hasCustomVerticalOverflow
+            ? "true"
+            : undefined
+        }
         className={cn("relative", className)}
         {...props}
       >

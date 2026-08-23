@@ -102,9 +102,9 @@ export function getCascaderTabTarget(
   if (index !== -1) return stops[index + (backwards ? -1 : 1)] ?? null;
 
   if (backwards) {
-    for (let i = stops.length - 1; i >= 0; i -= 1) {
-      const position = from.compareDocumentPosition(stops[i]);
-      if (position & Node.DOCUMENT_POSITION_PRECEDING) return stops[i];
+    for (const stop of [...stops].reverse()) {
+      const position = from.compareDocumentPosition(stop);
+      if (position & Node.DOCUMENT_POSITION_PRECEDING) return stop;
     }
     return null;
   }
@@ -126,7 +126,7 @@ export function isCascaderRtl(element: Element, provided: string): boolean {
   if (explicit === "rtl") return true;
   if (explicit === "ltr") return false;
   return (
-    element.ownerDocument?.defaultView?.getComputedStyle(element).direction ===
+    element.ownerDocument.defaultView?.getComputedStyle(element).direction ===
     "rtl"
   );
 }
@@ -181,6 +181,7 @@ export function buildCascaderIndex<T = unknown>(
   if (getParent) {
     for (const node of items ?? []) {
       // A nullish entry is a data bug: skip it like a duplicate, say so in dev.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- `items` is consumer-supplied and may lie about its element type.
       if (node == null) {
         if (process.env.NODE_ENV !== "production") {
           warnCascaderOnce(
@@ -223,6 +224,7 @@ export function buildCascaderIndex<T = unknown>(
     ) => {
       for (const node of nodes ?? []) {
         // Same degradation as the flat path above.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- `nodes` is consumer-supplied and may lie about its element type.
         if (node == null) {
           if (process.env.NODE_ENV !== "production") {
             warnCascaderOnce(
@@ -275,13 +277,13 @@ export function mergeCascaderIndex<T = unknown>(
   // Copy-on-write per bucket: only levels that got a page pay for a new array.
   const copied = new Set<string>();
   const append = (parentKey: string, node: CascaderNode<T>) => {
-    let bucket = childrenOf.get(parentKey);
+    let bucket = childrenOf.get(parentKey) ?? [];
     if (!copied.has(parentKey)) {
-      bucket = bucket ? bucket.slice() : [];
+      bucket = bucket.slice();
       childrenOf.set(parentKey, bucket);
       copied.add(parentKey);
     }
-    bucket!.push(node);
+    bucket.push(node);
   };
 
   const insert = (parentKey: string, nodes: readonly CascaderNode<T>[]) => {
@@ -436,6 +438,7 @@ export function matchesCascaderQuery<T>(
 ): boolean {
   if (!normalized) return true;
   // Coerced, not trusted: a label-less node is malformed data, not a crash.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- nodes come from the consumer, so `label` may be absent at runtime.
   if (foldCascaderText(node.label ?? "").includes(normalized)) return true;
   if (node.keywords) {
     for (const keyword of node.keywords) {
@@ -529,8 +532,7 @@ export function flattenCascaderTree<T>(
   ) => {
     const sentinel = sentinels?.has(parentKey) ?? false;
     const setSize = nodes.length + (sentinel ? 1 : 0);
-    for (let i = 0; i < nodes.length; i += 1) {
-      const node = nodes[i];
+    for (const [i, node] of nodes.entries()) {
       const branch = isCascaderBranch(index, node);
       const isExpanded = branch && expanded.has(node.value);
       rows.push({
@@ -817,6 +819,7 @@ export function findCascaderDataIssues<T>(
   const visit = (nodes: readonly CascaderNode<T>[] | undefined) => {
     for (const node of nodes ?? []) {
       // The build skips a nullish entry, and this runs BEFORE its warning.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- `nodes` is consumer-supplied and may lie about its element type.
       if (node == null) continue;
       if (seen.has(node.value)) duplicates.add(node.value);
       else seen.add(node.value);

@@ -652,7 +652,7 @@ export function useCascaderLoader<T = unknown>({
         .then((chain) => {
           settle();
           if (controller.signal.aborted || startEpoch !== epoch.current) return;
-          if (!chain?.length) return;
+          if (!chain.length) return;
           remember(chain);
           setStore((prev) => withChain(prev, chain));
         })
@@ -811,7 +811,7 @@ export function useCascaderLoader<T = unknown>({
 
   const searchResults = React.useMemo(() => {
     if (!hasSearch || !trimmed) return null;
-    if (!search || search.query !== trimmed) {
+    if (search?.query !== trimmed) {
       return NO_RESULTS as CascaderNode<T>[];
     }
     return search.results;
@@ -821,8 +821,8 @@ export function useCascaderLoader<T = unknown>({
     if (!hasSearch || !trimmed) return null;
     const settled = search?.query === trimmed;
     return {
-      loading: !settled || !!search?.loading,
-      error: settled && !!search?.error,
+      loading: !settled || !!search.loading,
+      error: settled && !!search.error,
       hasMore: false,
     };
   }, [hasSearch, trimmed, search]);

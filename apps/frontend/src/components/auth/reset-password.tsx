@@ -122,7 +122,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
-    if (emailAndPassword?.confirmPassword && password !== confirmPassword) {
+    if (emailAndPassword.confirmPassword && password !== confirmPassword) {
       toast.add({
         type: "error",
         title: localization.auth.passwordsDoNotMatch,
@@ -157,8 +157,8 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                   autoComplete="new-password"
                   placeholder={localization.auth.newPasswordPlaceholder}
                   required
-                  minLength={emailAndPassword?.minPasswordLength}
-                  maxLength={emailAndPassword?.maxPasswordLength}
+                  minLength={emailAndPassword.minPasswordLength}
+                  maxLength={emailAndPassword.maxPasswordLength}
                   disabled={isPending}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -171,8 +171,8 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                   onInvalid={(e) => {
                     e.preventDefault();
                     const el = e.target as HTMLInputElement;
-                    const min = emailAndPassword?.minPasswordLength;
-                    const max = emailAndPassword?.maxPasswordLength;
+                    const min = emailAndPassword.minPasswordLength;
+                    const max = emailAndPassword.maxPasswordLength;
                     const msg = el.validity.valueMissing
                       ? localization.auth.fieldRequired
                       : el.validity.tooShort
@@ -220,7 +220,7 @@ export function ResetPassword({ className }: ResetPasswordProps) {
               <PasswordStrengthMeter password={password} />
             </Field>
 
-            {emailAndPassword?.confirmPassword && (
+            {emailAndPassword.confirmPassword && (
               <Field data-invalid={!!fieldErrors.confirmPassword}>
                 <FieldLabel htmlFor="confirmPassword">
                   {localization.auth.confirmPassword}
@@ -234,8 +234,8 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                     autoComplete="new-password"
                     placeholder={localization.auth.confirmPasswordPlaceholder}
                     required
-                    minLength={emailAndPassword?.minPasswordLength}
-                    maxLength={emailAndPassword?.maxPasswordLength}
+                    minLength={emailAndPassword.minPasswordLength}
+                    maxLength={emailAndPassword.maxPasswordLength}
                     disabled={isPending}
                     onChange={() => {
                       setFieldErrors((prev) => ({
@@ -246,8 +246,8 @@ export function ResetPassword({ className }: ResetPasswordProps) {
                     onInvalid={(e) => {
                       e.preventDefault();
                       const el = e.target as HTMLInputElement;
-                      const min = emailAndPassword?.minPasswordLength;
-                      const max = emailAndPassword?.maxPasswordLength;
+                      const min = emailAndPassword.minPasswordLength;
+                      const max = emailAndPassword.maxPasswordLength;
                       const msg = el.validity.valueMissing
                         ? localization.auth.fieldRequired
                         : el.validity.tooShort

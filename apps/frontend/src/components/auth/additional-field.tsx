@@ -1,6 +1,9 @@
 "use client";
 
-import type { AdditionalField as AdditionalFieldConfig } from "@better-auth-ui/core";
+import type {
+  AdditionalField as AdditionalFieldConfig,
+  AdditionalFieldOption,
+} from "@better-auth-ui/core";
 import type { ComponentType } from "react";
 import { useRef, useState } from "react";
 import { resolveInputType } from "@better-auth-ui/core";
@@ -327,7 +330,7 @@ export function AdditionalField({
             <ComboboxEmpty>No items found.</ComboboxEmpty>
 
             <ComboboxList>
-              {(option) => (
+              {(option: AdditionalFieldOption) => (
                 <ComboboxItem key={option.value} value={option}>
                   {option.label}
                 </ComboboxItem>
@@ -476,7 +479,9 @@ function SliderField({ name, field, isPending }: AdditionalFieldProps) {
         id={name}
         name={name}
         value={[value]}
-        onValueChange={(v) => setValue((Array.isArray(v) ? v[0] : v) ?? min)}
+        onValueChange={(v: number | readonly number[]) =>
+          setValue((typeof v === "number" ? v : v[0]) ?? min)
+        }
         min={min}
         max={max}
         step={step}
@@ -542,7 +547,9 @@ function DateInput({ name, field, isPending }: AdditionalFieldProps) {
           type="text"
           name={name}
           value={formValue}
-          onChange={() => {}}
+          onChange={() => {
+            // Mirrors the visible input; the value is driven by `formValue`.
+          }}
           required={field.required}
           tabIndex={-1}
           className="sr-only"

@@ -1,27 +1,34 @@
-import { getViewURL } from "@better-auth-ui/core"
+import type { SyntheticEvent } from "react";
+import { useState } from "react";
+import { getViewURL } from "@better-auth-ui/core";
 import {
   useAuth,
   useFetchOptions,
-  useRequestPasswordReset
-} from "@better-auth-ui/react"
-import { type SyntheticEvent, useState } from "react"
+  useRequestPasswordReset,
+} from "@better-auth-ui/react";
 
-import { Button } from "@qr-manager/ui/components/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@qr-manager/ui/components/card"
+import { Button } from "@qr-manager/ui/components/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@qr-manager/ui/components/card";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
-  FieldLabel
-} from "@qr-manager/ui/components/field"
-import { Input } from "@qr-manager/ui/components/input"
-import { Spinner } from "@qr-manager/ui/components/spinner"
-import { cn } from "@qr-manager/ui/lib/utils"
-import { RESET_LINK_SENT_STORAGE_KEY } from "./reset-link-sent"
+  FieldLabel,
+} from "@qr-manager/ui/components/field";
+import { Input } from "@qr-manager/ui/components/input";
+import { Spinner } from "@qr-manager/ui/components/spinner";
+import { cn } from "@qr-manager/ui/lib/utils";
 
-export type ForgotPasswordProps = {
-  className?: string
+import { RESET_LINK_SENT_STORAGE_KEY } from "./reset-link-sent";
+
+export interface ForgotPasswordProps {
+  className?: string;
 }
 
 /**
@@ -44,45 +51,45 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
     navigate,
     plugins,
     viewPaths,
-    Link
-  } = useAuth()
+    Link,
+  } = useAuth();
 
-  const { fetchOptions, resetFetchOptions } = useFetchOptions()
+  const { fetchOptions, resetFetchOptions } = useFetchOptions();
 
   const { mutate: requestPasswordReset, isPending } = useRequestPasswordReset(
     authClient,
     {
       onError: () => {
-        resetFetchOptions()
+        resetFetchOptions();
       },
       onSuccess: (_data, { email }) => {
-        sessionStorage.setItem(RESET_LINK_SENT_STORAGE_KEY, email)
-        navigate({ to: `${basePaths.auth}/${viewPaths.auth.resetLinkSent}` })
-      }
-    }
-  )
+        sessionStorage.setItem(RESET_LINK_SENT_STORAGE_KEY, email);
+        navigate({ to: `${basePaths.auth}/${viewPaths.auth.resetLinkSent}` });
+      },
+    },
+  );
 
   function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
     requestPasswordReset({
       email: formData.get("email") as string,
       redirectTo: getViewURL(
         baseURL,
         basePaths.auth,
-        viewPaths.auth.resetPassword
+        viewPaths.auth.resetPassword,
       ),
-      fetchOptions
-    })
+      fetchOptions,
+    });
   }
 
-  const Captcha = plugins.find(
-    (plugin) => plugin.captchaComponent
-  )?.captchaComponent
+  const Captcha = plugins.find((plugin) =>
+    Boolean(plugin.captchaComponent),
+  )?.captchaComponent;
 
   const [fieldErrors, setFieldErrors] = useState<{
-    email?: string
-  }>({})
+    email?: string;
+  }>({});
 
   return (
     <Card className={cn("w-full max-w-sm", className)}>
@@ -109,20 +116,20 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
                 onChange={() => {
                   setFieldErrors((prev) => ({
                     ...prev,
-                    email: undefined
-                  }))
+                    email: undefined,
+                  }));
                 }}
                 onInvalid={(e) => {
-                  e.preventDefault()
-                  const el = e.target as HTMLInputElement
+                  e.preventDefault();
+                  const el = e.target as HTMLInputElement;
                   const msg = el.validity.valueMissing
                     ? localization.auth.fieldRequired
-                    : localization.auth.invalidEmail
+                    : localization.auth.invalidEmail;
 
                   setFieldErrors((prev) => ({
                     ...prev,
-                    email: msg
-                  }))
+                    email: msg,
+                  }));
                 }}
                 aria-invalid={!!fieldErrors.email}
               />
@@ -142,7 +149,7 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
           </FieldGroup>
         </form>
 
-        <div className="flex flex-col gap-3 items-center w-full mt-4">
+        <div className="mt-4 flex w-full flex-col items-center gap-3">
           <FieldDescription className="text-center">
             {localization.auth.rememberYourPassword}{" "}
             <Link
@@ -155,5 +162,5 @@ export function ForgotPassword({ className }: ForgotPasswordProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

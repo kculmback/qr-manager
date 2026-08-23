@@ -9,32 +9,30 @@ import tseslint from "typescript-eslint";
 /**
  * All packages that leverage t3-env should use this rule
  */
-export const restrictEnvAccess = defineConfig(
-  {
-    files: ["**/*.js", "**/*.ts", "**/*.tsx"],
-    ignores: ["**/env.ts"],
-    rules: {
-      "no-restricted-properties": [
-        "error",
-        {
-          object: "process",
-          property: "env",
-          message:
-            "Use `import { env } from '~/env'` instead to ensure validated types.",
-        },
-      ],
-      "no-restricted-imports": [
-        "error",
-        {
-          name: "process",
-          importNames: ["env"],
-          message:
-            "Use `import { env } from '~/env'` instead to ensure validated types.",
-        },
-      ],
-    },
+export const restrictEnvAccess = defineConfig({
+  files: ["**/*.js", "**/*.ts", "**/*.tsx"],
+  ignores: ["**/env.ts"],
+  rules: {
+    "no-restricted-properties": [
+      "error",
+      {
+        object: "process",
+        property: "env",
+        message:
+          "Use `import { env } from '~/env'` instead to ensure validated types.",
+      },
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        name: "process",
+        importNames: ["env"],
+        message:
+          "Use `import { env } from '~/env'` instead to ensure validated types.",
+      },
+    ],
   },
-);
+});
 
 export const baseConfig = defineConfig(
   // Ignore files not tracked by VCS and any config files
@@ -72,6 +70,11 @@ export const baseConfig = defineConfig(
           allowConstantLoopConditions: true,
         },
       ],
+      // Off: `||` is a deliberate idiom here, not an oversight. `flag ||
+      // undefined` omits a false DOM attribute, and a string fallback chain
+      // (`username || name || email`) must fall through an empty string - `??`
+      // would change behaviour at both.
+      "@typescript-eslint/prefer-nullish-coalescing": "off",
       "@typescript-eslint/no-non-null-assertion": "error",
       "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
     },

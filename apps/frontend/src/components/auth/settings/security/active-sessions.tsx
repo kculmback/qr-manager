@@ -1,22 +1,24 @@
-import { isSessionNotFreshError } from "@better-auth-ui/core"
-import { useAuth, useListSessions, useSession } from "@better-auth-ui/react"
-import { Fragment } from "react"
-import { Card, CardContent } from "@qr-manager/ui/components/card"
+import { Fragment } from "react";
+import { isSessionNotFreshError } from "@better-auth-ui/core";
+import { useAuth, useListSessions, useSession } from "@better-auth-ui/react";
+
+import { Card, CardContent } from "@qr-manager/ui/components/card";
 import {
   Item,
   ItemContent,
   ItemGroup,
   ItemMedia,
-  ItemSeparator
-} from "@qr-manager/ui/components/item"
-import { Skeleton } from "@qr-manager/ui/components/skeleton"
-import { cn } from "@qr-manager/ui/lib/utils"
-import { ActiveSession } from "./active-session"
-import { FreshSessionPrompt } from "./fresh-session-prompt"
-import { SessionActions } from "./session-actions"
+  ItemSeparator,
+} from "@qr-manager/ui/components/item";
+import { Skeleton } from "@qr-manager/ui/components/skeleton";
+import { cn } from "@qr-manager/ui/lib/utils";
 
-export type ActiveSessionsProps = {
-  className?: string
+import { ActiveSession } from "./active-session";
+import { FreshSessionPrompt } from "./fresh-session-prompt";
+import { SessionActions } from "./session-actions";
+
+export interface ActiveSessionsProps {
+  className?: string;
 }
 
 /**
@@ -28,19 +30,19 @@ export type ActiveSessionsProps = {
  * @returns A JSX element containing the sessions card
  */
 export function ActiveSessions({ className }: ActiveSessionsProps) {
-  const { authClient, localization } = useAuth()
-  const { data: session } = useSession(authClient)
+  const { authClient, localization } = useAuth();
+  const { data: session } = useSession(authClient);
 
-  const sessionsQuery = useListSessions(authClient)
-  const { data: sessions, error, isPending } = sessionsQuery
+  const sessionsQuery = useListSessions(authClient);
+  const { data: sessions, error, isPending } = sessionsQuery;
 
   const activeSessions = [...(sessions ?? [])].sort((activeSession) =>
-    activeSession.id === session?.session.id ? -1 : 1
-  )
+    activeSession.id === session?.session.id ? -1 : 1,
+  );
 
   return (
     <div>
-      <h2 className="text-sm font-semibold mb-3">
+      <h2 className="mb-3 text-sm font-semibold">
         {localization.settings.activeSessions}
       </h2>
 
@@ -52,7 +54,7 @@ export function ActiveSessions({ className }: ActiveSessionsProps) {
             <SessionRowSkeleton />
           ) : (
             <ItemGroup className="gap-0">
-              {activeSessions?.map((activeSession, index) => (
+              {activeSessions.map((activeSession, index) => (
                 <Fragment key={activeSession.id}>
                   {index > 0 && <ItemSeparator />}
                   <ActiveSession activeSession={activeSession} />
@@ -64,13 +66,13 @@ export function ActiveSessions({ className }: ActiveSessionsProps) {
         {!isPending && !error && (
           <SessionActions
             hasOtherSessions={activeSessions.some(
-              (activeSession) => activeSession.id !== session?.session.id
+              (activeSession) => activeSession.id !== session?.session.id,
             )}
           />
         )}
       </Card>
     </div>
-  )
+  );
 }
 
 function SessionRowSkeleton() {
@@ -84,5 +86,5 @@ function SessionRowSkeleton() {
         <Skeleton className="h-3 w-32" />
       </ItemContent>
     </Item>
-  )
+  );
 }

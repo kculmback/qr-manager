@@ -31,7 +31,9 @@ import { Spinner } from "@qr-manager/ui/components/spinner";
 import { cn } from "@qr-manager/ui/lib/utils";
 
 // Base UI extends its synthetic events with a handler-veto escape hatch.
-type VetoableEvent = { preventBaseUIHandler?: () => void };
+interface VetoableEvent {
+  preventBaseUIHandler?: () => void;
+}
 
 /** A row press. The veto hook is optional: an `as="button"` row is outside Base
  *  UI's listbox and gets a plain React event. */

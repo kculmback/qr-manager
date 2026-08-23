@@ -1,28 +1,30 @@
-import { createQrCodeSvgData, getEmailProviderLink } from "@better-auth-ui/core"
-import { useAuth } from "@better-auth-ui/react"
-import type { VariantProps } from "class-variance-authority"
-import { QrCode } from "lucide-react"
-import { useMemo } from "react"
+import type { VariantProps } from "class-variance-authority";
+import {
+  createQrCodeSvgData,
+  getEmailProviderLink,
+} from "@better-auth-ui/core";
+import { useAuth } from "@better-auth-ui/react";
+import { QrCode } from "lucide-react";
 
-import { buttonVariants } from "@qr-manager/ui/components/button"
+import { buttonVariants } from "@qr-manager/ui/components/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
-} from "@qr-manager/ui/components/tooltip"
-import { cn } from "@qr-manager/ui/lib/utils"
+  TooltipTrigger,
+} from "@qr-manager/ui/components/tooltip";
+import { cn } from "@qr-manager/ui/lib/utils";
 
-export type OpenEmailButtonProps = {
+export interface OpenEmailButtonProps {
   /** Email address used to detect the provider, e.g. from the verify-email flow. */
-  email: string
-  className?: string
+  email: string;
+  className?: string;
   /**
    * Button variant. Defaults to the primary style for dead-end views where
    * opening the inbox is the only action; pass `"secondary"` where it sits
    * beside a submit button that should stay the primary call to action.
    */
-  variant?: VariantProps<typeof buttonVariants>["variant"]
+  variant?: VariantProps<typeof buttonVariants>["variant"];
 }
 
 /**
@@ -42,23 +44,23 @@ export type OpenEmailButtonProps = {
 export function OpenEmailButton({
   email,
   className,
-  variant
+  variant,
 }: OpenEmailButtonProps) {
-  const { localization } = useAuth()
+  const { localization } = useAuth();
 
-  const provider = getEmailProviderLink(email)
-  const loginUrl = provider?.loginUrl
-  const qrCode = useMemo(
-    () => (loginUrl ? createQrCodeSvgData(loginUrl) : null),
-    [loginUrl]
-  )
+  const provider = getEmailProviderLink(email);
+  const loginUrl = provider?.loginUrl;
+  // Left to React Compiler rather than a manual `useMemo`: the compiler cannot
+  // preserve the hand-written one, and bails out of the whole component when it
+  // meets it.
+  const qrCode = loginUrl ? createQrCodeSvgData(loginUrl) : null;
 
-  if (!provider || !qrCode) return null
+  if (!provider || !qrCode) return null;
 
   const scanLabel = localization.auth.scanToOpenEmailProvider.replace(
     "{{provider}}",
-    provider.companyProvider
-  )
+    provider.companyProvider,
+  );
 
   return (
     <TooltipProvider>
@@ -72,7 +74,7 @@ export function OpenEmailButton({
         >
           {localization.auth.openEmailProvider.replace(
             "{{provider}}",
-            provider.companyProvider
+            provider.companyProvider,
           )}
           <QrCode data-icon="inline-end" />
         </TooltipTrigger>
@@ -93,5 +95,5 @@ export function OpenEmailButton({
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
+  );
 }

@@ -44,8 +44,7 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
     setIsUploading(true);
 
     try {
-      const resized =
-        (await avatar.resize?.(file, avatar.size, avatar.extension)) || file;
+      const resized = await avatar.resize(file, avatar.size, avatar.extension);
 
       const image =
         (await avatar.upload?.(resized)) ||
@@ -70,29 +69,28 @@ export function ChangeAvatar({ className }: ChangeAvatarProps) {
     setIsUploading(false);
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     const currentImage = session?.user.image;
 
-    updateUser(
-      { image: null },
-      {
-        onSuccess: async () => {
-          if (currentImage) {
-            setIsDeleting(true);
-            try {
-              await avatar.delete?.(currentImage);
-            } finally {
-              setIsDeleting(false);
-            }
-          }
+    // Runs only once the profile has stopped pointing at the old image, so a
+    // failed delete cannot leave the user with a broken avatar.
+    const deleteImage = async () => {
+      if (currentImage) {
+        setIsDeleting(true);
+        try {
+          await avatar.delete?.(currentImage);
+        } finally {
+          setIsDeleting(false);
+        }
+      }
 
-          toast.add({
-            type: "success",
-            title: localization.settings.avatarDeletedSuccess,
-          });
-        },
-      },
-    );
+      toast.add({
+        type: "success",
+        title: localization.settings.avatarDeletedSuccess,
+      });
+    };
+
+    updateUser({ image: null }, { onSuccess: () => void deleteImage() });
   }
 
   return (

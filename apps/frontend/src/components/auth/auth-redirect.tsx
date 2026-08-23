@@ -1,11 +1,12 @@
-import { getAuthRedirectAction } from "@better-auth-ui/core"
-import { useAuth, useSession } from "@better-auth-ui/react"
-import { useEffect, useRef } from "react"
-import { Spinner } from "@qr-manager/ui/components/spinner"
-import { cn } from "@qr-manager/ui/lib/utils"
+import { useEffect, useRef } from "react";
+import { getAuthRedirectAction } from "@better-auth-ui/core";
+import { useAuth, useSession } from "@better-auth-ui/react";
 
-export type AuthRedirectProps = {
-  className?: string
+import { Spinner } from "@qr-manager/ui/components/spinner";
+import { cn } from "@qr-manager/ui/lib/utils";
+
+export interface AuthRedirectProps {
+  className?: string;
 }
 
 /**
@@ -19,22 +20,22 @@ export type AuthRedirectProps = {
  * @returns The centered spinner shown while the session and redirect resolve
  */
 export function AuthRedirect({ className }: AuthRedirectProps) {
-  const { authClient, basePaths, viewPaths } = useAuth()
-  const { data: session, isPending } = useSession(authClient)
-  const hasRedirected = useRef(false)
+  const { authClient, basePaths, viewPaths } = useAuth();
+  const { data: session, isPending } = useSession(authClient);
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    if (isPending || hasRedirected.current) return
-    hasRedirected.current = true
+    if (isPending || hasRedirected.current) return;
+    hasRedirected.current = true;
 
     const action = getAuthRedirectAction(
       new URL(window.location.href),
       Boolean(session),
-      `${basePaths.auth}/${viewPaths.auth.signIn}`
-    )
+      `${basePaths.auth}/${viewPaths.auth.signIn}`,
+    );
 
-    window.location.replace(action.to)
-  }, [basePaths.auth, isPending, session, viewPaths.auth.signIn])
+    window.location.replace(action.to);
+  }, [basePaths.auth, isPending, session, viewPaths.auth.signIn]);
 
-  return <Spinner className={cn("mx-auto my-auto", className)} />
+  return <Spinner className={cn("mx-auto my-auto", className)} />;
 }
