@@ -10,6 +10,7 @@
     "format": "prettier --check . --ignore-path ../../.gitignore --ignore-path .prettierignore",
     "lint": "eslint --flag unstable_native_nodejs_ts_config --no-warn-ignored",
     "migrate": "pnpm with-env tsx src/migrate.ts",
+    "seed": "pnpm with-env tsx src/seed.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env --"

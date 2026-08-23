@@ -3,12 +3,13 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import type { Transaction } from "@qr-manager/db/client";
-import { and, desc, eq } from "@qr-manager/db";
+import { and, count, desc, eq } from "@qr-manager/db";
 import { Category, Code } from "@qr-manager/db/schema";
 import {
   buildShortUrl,
   codeCategoryInputSchema,
   codeContentSchema,
+  codeListInputSchema,
   codeMediumSchema,
   codeModeSchema,
   codeTagsInputSchema,
@@ -23,6 +24,7 @@ import {
 } from "@qr-manager/validators";
 
 import type { CodeTaxonomy } from "../taxonomy";
+import { compileCodeFilter } from "../code-filter";
 import {
   EMPTY_TAXONOMY,
   loadTagsByCode,
@@ -167,29 +169,71 @@ const SLUG_TAKEN = new TRPCError({
 });
 
 export const codeRouter = {
-  all: protectedProcedure.query(async ({ ctx }) => {
-    // The category comes along in the join; the tags cannot, since a code has
-    // many of them and the join would multiply the rows. One extra query for
-    // the whole page instead.
-    const rows = await ctx.db
-      .select({ code: Code, category: categorySelection })
-      .from(Code)
-      .leftJoin(Category, eq(Category.id, Code.categoryId))
-      .where(eq(Code.userId, ctx.session.user.id))
-      .orderBy(desc(Code.createdAt));
+  /**
+   * One page of the user's codes, newest first, narrowed by the list's filter.
+   *
+   * Both halves are the server's job because they are the same job: a filter
+   * applied after the LIMIT would narrow a page rather than the list, so the
+   * bar's query is compiled into this statement's `WHERE` -- see
+   * `compileCodeFilter`.
+   */
+  list: protectedProcedure
+    .input(codeListInputSchema)
+    .query(async ({ ctx, input }) => {
+      const where = and(
+        // Scoped to the owner first, so no filter the client sends can widen
+        // what the query can reach.
+        eq(Code.userId, ctx.session.user.id),
+        input.filter && compileCodeFilter(ctx.db, input.filter),
+      );
 
-    const tagsByCode = await loadTagsByCode(
-      ctx.db,
-      rows.map((row) => row.code.id),
-    );
+      const [totals] = await ctx.db
+        .select({ total: count() })
+        .from(Code)
+        .where(where);
 
-    return rows.map((row) =>
-      toCodeView(row.code, ctx.shortUrlBase, {
-        category: row.category,
-        tags: tagsByCode.get(row.code.id) ?? [],
-      }),
-    );
-  }),
+      const total = totals?.total ?? 0;
+      const pageCount = Math.max(1, Math.ceil(total / input.perPage));
+
+      // Clamped rather than honoured: a bookmarked page 5 of a list that has
+      // since shrunk to three pages should show the last page, not an empty
+      // one that reads as "nothing matches".
+      const page = Math.min(input.page, pageCount);
+
+      // The category comes along in the join; the tags cannot, since a code has
+      // many of them and the join would multiply the rows -- which would also
+      // make the LIMIT count join output instead of codes. One extra query for
+      // the whole page instead.
+      const rows = await ctx.db
+        .select({ code: Code, category: categorySelection })
+        .from(Code)
+        .leftJoin(Category, eq(Category.id, Code.categoryId))
+        .where(where)
+        // `createdAt` alone is not a total order -- a seeded or scripted batch
+        // can share a timestamp, and rows tied across a page boundary would
+        // appear twice or not at all. `id` breaks the tie.
+        .orderBy(desc(Code.createdAt), desc(Code.id))
+        .limit(input.perPage)
+        .offset((page - 1) * input.perPage);
+
+      const tagsByCode = await loadTagsByCode(
+        ctx.db,
+        rows.map((row) => row.code.id),
+      );
+
+      return {
+        codes: rows.map((row) =>
+          toCodeView(row.code, ctx.shortUrlBase, {
+            category: row.category,
+            tags: tagsByCode.get(row.code.id) ?? [],
+          }),
+        ),
+        page,
+        perPage: input.perPage,
+        total,
+        pageCount,
+      };
+    }),
 
   byId: protectedProcedure
     .input(z.object({ id: z.uuid() }))

@@ -24,7 +24,7 @@ function NewCodePage() {
     trpc.code.create.mutationOptions({
       onSuccess: async (code) => {
         await Promise.all([
-          queryClient.invalidateQueries(trpc.code.all.queryFilter()),
+          queryClient.invalidateQueries(trpc.code.pathFilter()),
           // A category or tag named here may not have existed a moment ago.
           queryClient.invalidateQueries(trpc.taxonomy.pathFilter()),
         ]);

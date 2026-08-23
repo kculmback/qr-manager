@@ -59,6 +59,7 @@ Run everything from the repo root; Turbo fans out to the workspaces.
 | `pnpm dev:db` / `pnpm dev:db:stop`   | Local Postgres in Docker (apps stay on the host)   |
 | `pnpm db:generate`                   | Emit a SQL migration after a schema change         |
 | `pnpm db:migrate`                    | Apply pending migrations                           |
+| `pnpm db:seed`                       | Fill an account with sample codes (see below)      |
 | `pnpm typecheck` / `lint` / `format` | Verification; `lint:fix` and `format:fix` to write |
 | `pnpm build`                         | Build every workspace                              |
 | `pnpm ui-add`                        | Add a shadcn component to `packages/ui`            |
@@ -161,6 +162,21 @@ better-auth 1.4 into that workspace's tree, and pnpm then satisfies the peers of
 1.1 instead of 1.4 and throws `does not provide an export named
 'kAPIErrorHeaderSymbol'` on import. The `generate` script runs the CLI through
 `pnpx`, so it never needed the dependency.
+
+### Seeding an account with sample codes
+
+`pnpm db:seed --user <email or id> --count 50` writes plausible codes,
+categories and tags for one existing account -- run it with no `--user` to list
+the accounts on the database. Roughly a quarter of the codes get no category
+and a third no tags, so the empty states stay reachable. `--seed <n>` makes a
+run reproducible; `--clear` deletes that account's existing codes, categories
+and tags first.
+
+It lives at `apps/backend/src/seed.ts` beside `migrate.ts` (that is where the
+`tsx` runner and the validated env already are) and is not a `tsdown` entry, so
+it never reaches the image. Payloads go through `codeContentSchema` before
+insert -- a generator that drifts from its schema fails the seed rather than
+writing a row the UI cannot render.
 
 ### Passkeys are bound to one hostname
 

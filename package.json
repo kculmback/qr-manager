@@ -14,6 +14,7 @@
     "db:generate": "pnpm -F @qr-manager/db generate",
     "db:migrate": "pnpm -F @qr-manager/backend migrate",
     "db:push": "turbo -F @qr-manager/db push",
+    "db:seed": "pnpm -F @qr-manager/backend seed",
     "db:studio": "turbo -F @qr-manager/db studio",
     "dev": "turbo watch dev --continue",
     "dev:db": "docker compose -f docker-compose.dev.yml up -d",
