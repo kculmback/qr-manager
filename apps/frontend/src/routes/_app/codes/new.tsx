@@ -23,7 +23,11 @@ function NewCodePage() {
   const { mutate: createCode, isPending } = useMutation(
     trpc.code.create.mutationOptions({
       onSuccess: async (code) => {
-        await queryClient.invalidateQueries(trpc.code.all.queryFilter());
+        await Promise.all([
+          queryClient.invalidateQueries(trpc.code.all.queryFilter()),
+          // A category or tag named here may not have existed a moment ago.
+          queryClient.invalidateQueries(trpc.taxonomy.pathFilter()),
+        ]);
         await navigate({ to: "/codes/$codeId", params: { codeId: code.id } });
       },
       onError: (mutationError) => setError(mutationError.message),

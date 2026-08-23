@@ -24,6 +24,7 @@ import {
 import { Skeleton } from "@qr-manager/ui/components/skeleton";
 import { CODE_TYPES } from "@qr-manager/validators";
 
+import { CodeTaxonomy } from "~/components/codes/code-taxonomy";
 import { useTRPC } from "~/lib/trpc";
 
 export const Route = createFileRoute("/_app/codes/")({
@@ -108,6 +109,11 @@ function CodesPage() {
                 <ItemDescription>
                   {code.mode === "dynamic" ? code.shortUrl : "Static code"}
                 </ItemDescription>
+                <CodeTaxonomy
+                  category={code.category}
+                  tags={code.tags}
+                  className="pt-1"
+                />
               </ItemContent>
               <Badge variant="outline">{CODE_TYPES[code.type].label}</Badge>
               {code.mode === "dynamic" && <Badge>Dynamic</Badge>}

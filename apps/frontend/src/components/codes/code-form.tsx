@@ -38,12 +38,17 @@ import type { FieldErrorMap } from "~/lib/use-field-errors";
 import { useFieldErrors } from "~/lib/use-field-errors";
 import { CodeField, formString, optionalFormString } from "./code-field";
 import { PAYLOAD_FIELDSETS } from "./payload-fields";
+import { CategoryField, TagsField } from "./taxonomy-fields";
 
 export interface CodeFormValues {
   name: string;
   mode: CodeMode;
   slug?: string;
   content: CodeContent;
+  /** Category *name*, or null for none. The server creates it if it is new. */
+  category: string | null;
+  /** Tag names, likewise. */
+  tags: string[];
 }
 
 export interface CodeFormProps {
@@ -53,6 +58,8 @@ export interface CodeFormProps {
     mode: CodeMode;
     slug: string;
     content: CodeContent;
+    category: string | null;
+    tags: string[];
   };
   submitLabel: string;
   isPending: boolean;
@@ -144,6 +151,12 @@ export function CodeForm({
       ? initial.mode === "dynamic"
       : CODE_TYPES.url.defaultMode === "dynamic",
   );
+  // Neither of these can come out of the `FormData` the way the rest of the
+  // form does: both are comboboxes whose value is chosen rather than typed.
+  const [category, setCategory] = useState<string | null>(
+    initial?.category ?? null,
+  );
+  const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
 
   const errors = useFieldErrors();
   const { replaceErrors } = errors;
@@ -198,9 +211,11 @@ export function CodeForm({
         mode,
         slug: optionalFormString(data, "slug"),
         content: parsed.data,
+        category,
+        tags,
       });
     },
-    [type, mode, fromFormData, onSubmit, replaceErrors],
+    [type, mode, category, tags, fromFormData, onSubmit, replaceErrors],
   );
 
   return (
@@ -290,6 +305,24 @@ export function CodeForm({
             )}
           </>
         )}
+
+        <FieldSeparator />
+
+        {/* Filing, not content: neither of these changes a single pixel of the
+            code itself, so they sit below everything that does. */}
+        <CategoryField
+          errors={errors}
+          value={category}
+          onChange={setCategory}
+          disabled={isPending}
+        />
+
+        <TagsField
+          errors={errors}
+          value={tags}
+          onChange={setTags}
+          disabled={isPending}
+        />
 
         {initial && <EditWarning from={initial.mode} to={mode} />}
 

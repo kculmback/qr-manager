@@ -20,6 +20,7 @@ import { CODE_TYPES } from "@qr-manager/validators";
 
 import type { CodeFormValues } from "~/components/codes/code-form";
 import { CodeForm } from "~/components/codes/code-form";
+import { CodeTaxonomy } from "~/components/codes/code-taxonomy";
 import { DeleteCodeDialog } from "~/components/codes/delete-code-dialog";
 import { QrPreview } from "~/components/codes/qr-preview";
 import { useTRPC } from "~/lib/trpc";
@@ -70,8 +71,15 @@ function CodeDetailPage() {
     trpc.code.byId.queryOptions({ id: codeId }),
   );
 
+  // Saving or deleting can create a category or tag, and can leave the last
+  // one unused -- in which case the server drops it. Either way the suggestion
+  // lists are stale.
   const invalidate = useCallback(
-    () => queryClient.invalidateQueries(trpc.code.pathFilter()),
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries(trpc.code.pathFilter()),
+        queryClient.invalidateQueries(trpc.taxonomy.pathFilter()),
+      ]),
     [queryClient, trpc],
   );
 
@@ -138,6 +146,8 @@ function CodeDetailPage() {
             }
           />
         </div>
+
+        <CodeTaxonomy category={code.category} tags={code.tags} />
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -167,6 +177,8 @@ function CodeDetailPage() {
                 mode: code.mode,
                 slug: code.slug,
                 content: code.content,
+                category: code.category?.name ?? null,
+                tags: code.tags.map((tag) => tag.name),
               }}
               submitLabel="Save changes"
               isPending={isSaving}

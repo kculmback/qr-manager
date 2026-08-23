@@ -9,3 +9,4 @@ export * from "./codes/text";
 export * from "./codes/email";
 export * from "./codes/sms";
 export * from "./codes/geo";
+export * from "./codes/taxonomy";
