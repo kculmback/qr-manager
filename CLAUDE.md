@@ -10,7 +10,8 @@ agent needs to change code safely.
 
 The long-term goal is a full QR code manager, not just a QR generator. Four
 capabilities define the target; weigh design decisions against them even while
-the codebase is still boilerplate.
+the codebase is still boilerplate. A fifth — NFC tag management — comes after
+the QR side works, but shapes the model from the start.
 
 **Many QR types.** Wi-Fi credentials, contact cards (vCard/MeCard), plain URLs,
 email, SMS, calendar events, geo, and so on. Each type is a different payload
@@ -35,6 +36,15 @@ scanned — the motivating example is calling a user's Home Assistant webhook.
 Actions run on the redirect path, so they must not block or delay the user's
 redirect, and outbound URLs are user-supplied, which makes SSRF a real concern
 for a self-hosted app sitting on a home network.
+
+**NFC tags, later.** The same four capabilities apply to NFC tags: many record
+types (URL, Wi-Fi, text, vCard, launching an app), dynamic wherever the record
+type allows it, scan analytics off that same redirect, and actions on scan. QR
+ships first and NFC follows, so don't build NFC yet — but when a decision would
+otherwise hard-code "QR", prefer the shape that a second tag medium can reuse.
+The payload types, the dynamic-redirect model, scan records, and actions are all
+about the destination and its side effects, not about how the destination got
+encoded; only the encoding and the artwork are genuinely QR-specific.
 
 Together these mean the redirect endpoint is the heart of the product, not an
 afterthought: it resolves the destination, records the scan, and fires actions.

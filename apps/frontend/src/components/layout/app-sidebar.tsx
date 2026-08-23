@@ -5,6 +5,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
   LayoutDashboard,
+  Nfc,
   QrCode,
   Settings,
   Users,
@@ -60,6 +61,7 @@ const isPlaceholder = (item: NavItem): item is NavPlaceholder => "soon" in item;
 const manageItems: NavItem[] = [
   { label: "Overview", icon: LayoutDashboard, link: { to: "/" } },
   { label: "QR codes", icon: QrCode, soon: true },
+  { label: "NFC tags", icon: Nfc, soon: true },
   { label: "Analytics", icon: BarChart3, soon: true },
   { label: "Actions", icon: Zap, soon: true },
 ];
