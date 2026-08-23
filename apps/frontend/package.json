@@ -13,8 +13,8 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@better-auth-ui/core": "^1.7.7",
-    "@better-auth-ui/react": "^1.7.7",
+    "@better-auth-ui/core": "^1.7.10",
+    "@better-auth-ui/react": "^1.7.10",
     "@qr-manager/api": "workspace:*",
     "@qr-manager/auth": "workspace:*",
     "@qr-manager/db": "workspace:*",

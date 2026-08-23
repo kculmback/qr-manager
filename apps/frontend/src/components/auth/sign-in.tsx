@@ -42,6 +42,7 @@ import { cn } from "@qr-manager/ui/lib/utils";
 
 import type { SocialLayout } from "./provider-buttons";
 import { asAuthError } from "~/lib/auth/errors";
+import { useRegistrationStatus } from "~/lib/auth/registration";
 import { useSignInContinuation } from "~/lib/auth/use-sign-in-continuation";
 import { LastUsedBadge } from "./last-login-method/last-used-badge";
 import { ProviderButtons } from "./provider-buttons";
@@ -79,6 +80,9 @@ export function SignIn({
 
   const { fetchOptions, resetFetchOptions } = useFetchOptions();
   const continueSignIn = useSignInContinuation();
+  // Self-hosted instances can close registration, in which case offering a
+  // sign-up link only leads to a rejection.
+  const { signUpEnabled } = useRegistrationStatus();
 
   const [password, setPassword] = useState("");
 
@@ -357,7 +361,7 @@ export function SignIn({
             </Link>
           )}
 
-          {emailAndPassword.enabled && (
+          {emailAndPassword.enabled && signUpEnabled && (
             <FieldDescription className="text-center">
               {localization.auth.needToCreateAnAccount}{" "}
               <Link

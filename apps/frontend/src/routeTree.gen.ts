@@ -10,12 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AuthPathRouteImport } from './routes/auth/$path'
+import { Route as AppAdminUsersRouteImport } from './routes/_app/admin/users'
 import { Route as AppSettingsPathRouteImport } from './routes/_app/settings/$path'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -28,6 +35,11 @@ const AuthPathRoute = AuthPathRouteImport.update({
   path: '/auth/$path',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsPathRoute = AppSettingsPathRouteImport.update({
   id: '/settings/$path',
   path: '/settings/$path',
@@ -36,31 +48,45 @@ const AppSettingsPathRoute = AppSettingsPathRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/setup': typeof SetupRoute
   '/auth/$path': typeof AuthPathRoute
+  '/admin/users': typeof AppAdminUsersRoute
   '/settings/$path': typeof AppSettingsPathRoute
 }
 export interface FileRoutesByTo {
+  '/setup': typeof SetupRoute
   '/auth/$path': typeof AuthPathRoute
   '/': typeof AppIndexRoute
+  '/admin/users': typeof AppAdminUsersRoute
   '/settings/$path': typeof AppSettingsPathRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/setup': typeof SetupRoute
   '/auth/$path': typeof AuthPathRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/admin/users': typeof AppAdminUsersRoute
   '/_app/settings/$path': typeof AppSettingsPathRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/$path' | '/settings/$path'
+  fullPaths: '/' | '/setup' | '/auth/$path' | '/admin/users' | '/settings/$path'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth/$path' | '/' | '/settings/$path'
-  id: '__root__' | '/_app' | '/auth/$path' | '/_app/' | '/_app/settings/$path'
+  to: '/setup' | '/auth/$path' | '/' | '/admin/users' | '/settings/$path'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/setup'
+    | '/auth/$path'
+    | '/_app/'
+    | '/_app/admin/users'
+    | '/_app/settings/$path'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  SetupRoute: typeof SetupRoute
   AuthPathRoute: typeof AuthPathRoute
 }
 
@@ -71,6 +97,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -87,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPathRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/admin/users': {
+      id: '/_app/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AppAdminUsersRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/$path': {
       id: '/_app/settings/$path'
       path: '/settings/$path'
@@ -99,11 +139,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
+  AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppSettingsPathRoute: typeof AppSettingsPathRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
+  AppAdminUsersRoute: AppAdminUsersRoute,
   AppSettingsPathRoute: AppSettingsPathRoute,
 }
 
@@ -111,6 +153,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  SetupRoute: SetupRoute,
   AuthPathRoute: AuthPathRoute,
 }
 export const routeTree = rootRouteImport

@@ -11,9 +11,27 @@ const validAuthPathSegments = new Set([
 ]);
 
 export const Route = createFileRoute("/auth/$path")({
-  beforeLoad({ params: { path } }) {
+  async beforeLoad({ params: { path }, context: { queryClient, trpc } }) {
     if (!validAuthPathSegments.has(path)) {
       throw redirect({ to: "/" });
+    }
+
+    const { setupRequired, signUpEnabled } = await queryClient.ensureQueryData(
+      trpc.auth.registrationStatus.queryOptions(),
+    );
+
+    // Nothing to sign into yet — claiming the instance comes first.
+    if (setupRequired) {
+      throw redirect({ to: "/setup" });
+    }
+
+    // `ALLOW_REGISTRATION` is off, so the sign-up form would only produce a
+    // rejection from the server. Send visitors to the form that can work.
+    if (path === viewPaths.auth.signUp && !signUpEnabled) {
+      throw redirect({
+        to: "/auth/$path",
+        params: { path: viewPaths.auth.signIn },
+      });
     }
   },
   component: AuthPage,

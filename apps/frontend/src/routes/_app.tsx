@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 import {
   SidebarInset,
@@ -14,6 +14,17 @@ import { AppSidebar } from "~/components/layout/app-sidebar";
  * signed-out visitor gets a bare, centred card.
  */
 export const Route = createFileRoute("/_app")({
+  async beforeLoad({ context: { queryClient, trpc } }) {
+    const { setupRequired } = await queryClient.ensureQueryData(
+      trpc.auth.registrationStatus.queryOptions(),
+    );
+
+    // A brand new deployment has nothing to show and nobody to show it to;
+    // claiming the instance is the only thing that can happen next.
+    if (setupRequired) {
+      throw redirect({ to: "/setup" });
+    }
+  },
   component: AppLayout,
 });
 

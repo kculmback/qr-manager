@@ -153,6 +153,29 @@ Local dev reads the **root** `.env` — each app's `with-env` script is
 `dotenv -e ../../.env --`. `apps/backend`'s `start` script deliberately omits
 `with-env` so the container's real environment wins.
 
+### Base UI's `nativeButton` must match the element you render
+
+Anything built on Base UI's `useButton` — `Button`, `Tabs.Tab`, `Toggle`,
+`Menu.Item`, and every `*.Trigger` / `*.Close` — assumes it renders a real
+`<button>`. Hand it a `render` prop that produces something else (a `<a>`, a
+TanStack `<Link>`) and it logs _"A component that acts as a button expected a
+native `<button>`"_ in dev. Set `nativeButton={false}` there:
+
+```tsx
+<Button nativeButton={false} render={<a href={href} />}>
+```
+
+The check runs **both ways**: `nativeButton={false}` on something that does
+render a `<button>` warns just as loudly, so only add it where the rendered
+element genuinely is not a button. Rendering one Base UI button component into
+another (`<DropdownMenuTrigger render={<Button />} />`) needs nothing — the
+chain still bottoms out at a `<button>`.
+
+Not every component with a `render` prop is affected. Base UI's plain
+`useRender` wrappers (`SidebarMenuButton`, `Tooltip.Trigger`, `Select.Icon`,
+`*.ItemIndicator`) never call `useButton` and accept no `nativeButton`, so a
+`<Link>` or `<span>` is fine in those.
+
 ### Docker builds use the repo root as context
 
 Both Dockerfiles live in their app directory but must be built from the root

@@ -55,7 +55,7 @@ export interface SignUpProps {
    * created an immediately usable session. Email verification still takes
    * priority, and social sign-ups are unaffected.
    */
-  onSignUpSuccess?: () => void;
+  onSignUpSuccess?: () => void | Promise<void>;
 }
 
 /**
@@ -125,7 +125,7 @@ export function SignUp({
             ),
           });
         } else if (onSignUpSuccess) {
-          onSignUpSuccess();
+          void onSignUpSuccess();
         } else {
           navigate({ to: redirectTo });
         }

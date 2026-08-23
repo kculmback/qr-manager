@@ -9,6 +9,7 @@ import {
 import { Toaster } from "@qr-manager/ui/components/toast";
 import { TooltipProvider } from "@qr-manager/ui/components/tooltip";
 
+import { adminPlugin } from "~/lib/auth/admin-plugin";
 import { authClient } from "~/lib/auth/client";
 import { themePlugin } from "~/lib/auth/theme-plugin";
 import { AuthProvider } from "./auth/auth-provider";
@@ -46,6 +47,7 @@ export function Providers({ children }: { children: ReactNode }) {
             //   ],
             //   permissions: [{ resource: "project", actions: ["read", "write"] }]
             // }),
+            adminPlugin(),
             themePlugin({ useTheme }),
             // multiSessionPlugin(),
             // deleteUserPlugin(),

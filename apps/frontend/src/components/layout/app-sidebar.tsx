@@ -1,11 +1,13 @@
 import type { LinkProps } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
+import { useSession } from "@better-auth-ui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   BarChart3,
   LayoutDashboard,
   QrCode,
   Settings,
+  Users,
   Zap,
 } from "lucide-react";
 
@@ -26,6 +28,7 @@ import {
 } from "@qr-manager/ui/components/sidebar";
 
 import { UserButton } from "~/components/auth/user/user-button";
+import { authClient } from "~/lib/auth/client";
 
 /**
  * A navigation entry that points at a route which exists today.
@@ -69,9 +72,27 @@ const accountItems: NavItem[] = [
   },
 ];
 
+const adminItems: NavItem[] = [
+  { label: "Users", icon: Users, link: { to: "/admin/users" } },
+];
+
+/**
+ * Whether to offer the admin section at all. This is presentation only — the
+ * page and every admin endpoint check permissions themselves — so a plain role
+ * check is enough, and a stale session simply shows a link that leads to
+ * "Access denied".
+ */
+function useIsAdmin() {
+  const { data: session } = useSession(authClient);
+  const role = session?.user.role;
+
+  return typeof role === "string" && role.split(",").includes("admin");
+}
+
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { state, isMobile } = useSidebar();
+  const isAdmin = useIsAdmin();
 
   // Collapsed rail is 3rem wide — only the avatar fits.
   const iconOnly = state === "collapsed" && !isMobile;
@@ -150,6 +171,15 @@ export function AppSidebar() {
             <SidebarMenu>{accountItems.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{adminItems.map(renderItem)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter>

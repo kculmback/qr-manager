@@ -1,9 +1,11 @@
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
-import { oAuthProxy } from "better-auth/plugins";
+import { admin, oAuthProxy } from "better-auth/plugins";
 
 import type { Db } from "@qr-manager/db/client";
+
+import { registrationDatabaseHooks } from "./registration";
 
 export function initAuth<
   TExtraPlugins extends BetterAuthPlugin[] = BetterAuthPlugin[],
@@ -15,6 +17,13 @@ export function initAuth<
   frontendUrl?: string;
   secret: string | undefined;
 
+  /**
+   * Whether anyone may create an account. The very first account is always
+   * allowed regardless, so a deployment that ships with this off is still
+   * claimable — see `./registration`.
+   */
+  allowRegistration: boolean;
+
   discordClientId?: string;
   discordClientSecret?: string;
   extraPlugins?: TExtraPlugins;
@@ -25,7 +34,17 @@ export function initAuth<
     }),
     baseURL: options.baseUrl,
     secret: options.secret,
+    emailAndPassword: {
+      enabled: true,
+    },
+    // Not `emailAndPassword.disableSignUp`: that switch is static, and the
+    // first account has to get through even when registration is closed.
+    databaseHooks: registrationDatabaseHooks({
+      db: options.db,
+      allowRegistration: options.allowRegistration,
+    }),
     plugins: [
+      admin(),
       oAuthProxy({
         productionURL: options.productionUrl,
       }),

@@ -8,6 +8,20 @@
       "when": 1787279770896,
       "tag": "0000_lively_talon",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787447999485,
+      "tag": "0001_odd_wallop",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787448613669,
+      "tag": "0002_chief_patriot",
+      "breakpoints": true
     }
   ]
 }

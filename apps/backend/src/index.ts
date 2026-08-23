@@ -44,6 +44,7 @@ app.all("/api/trpc/*", (c) => {
         auth,
         db,
         headers: req.headers,
+        allowRegistration: env.ALLOW_REGISTRATION,
       }),
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);

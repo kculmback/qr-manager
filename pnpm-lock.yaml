@@ -9,6 +9,9 @@ catalogs:
     '@better-auth/cli':
       specifier: ^1.4.21
       version: 1.4.21
+    '@better-auth/core':
+      specifier: 1.7.1
+      version: 1.7.1
     '@eslint/js':
       specifier: ^9.38.0
       version: 9.38.0
@@ -184,11 +187,11 @@ importers:
   apps/frontend:
     dependencies:
       '@better-auth-ui/core':
-        specifier: ^1.7.7
-        version: 1.7.7(c96ab280705a929d3d18230d77dfff20)
+        specifier: ^1.7.10
+        version: 1.7.10(c96ab280705a929d3d18230d77dfff20)
       '@better-auth-ui/react':
-        specifier: ^1.7.7
-        version: 1.7.7(c47173a871db04137b31b1eba4e99d02)
+        specifier: ^1.7.10
+        version: 1.7.10(f4b8d54694e78ed6a527fda05dd27763)
       '@qr-manager/api':
         specifier: workspace:*
         version: link:../../packages/api
@@ -304,6 +307,9 @@ importers:
 
   packages/api:
     dependencies:
+      '@better-auth/core':
+        specifier: 'catalog:'
+        version: 1.7.1(@better-auth/utils@0.5.0)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.4.3))(jose@6.2.9)(kysely@0.29.5)(nanostores@1.5.2)
       '@qr-manager/auth':
         specifier: workspace:*
         version: link:../auth
@@ -833,8 +839,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@better-auth-ui/core@1.7.7':
-    resolution: {integrity: sha512-MYeoWOFfi+qSrBMGQ8FNeZdscFrk9KpWNprMi9Dj99wDJZ0ObZMNoI4lVnzLjlOeWtrY0/AXsbbY9MdRJePPkA==}
+  '@better-auth-ui/core@1.7.10':
+    resolution: {integrity: sha512-Zl34uArtlioJAfxQqoDMc76UqOrtmvXPCk45al2beXDNlKvbNdvMPyyuL3to3i8EFtzMuRkNjT3kkQLO75TvQw==}
     peerDependencies:
       '@better-auth/agent-auth': '>=0.6.2'
       '@better-auth/api-key': '>=1.7.0'
@@ -875,8 +881,8 @@ packages:
       autumn-js:
         optional: true
 
-  '@better-auth-ui/react@1.7.7':
-    resolution: {integrity: sha512-04UerrKznl6f3gOH7F13HjyMll1uzvQ8ck0ptOIjHN3RhxE1Xlh9mLLb5n/t2+D4+z1n8IktgmplqKeDznLYXg==}
+  '@better-auth-ui/react@1.7.10':
+    resolution: {integrity: sha512-XzoGPbnVtcC+LS6QBVIBYNSrZah9WC/S2VLbmodfvjSaNsO1gkj8qhOAOvlFS21w9wcxgCZOT0uC7V5eYQRdTg==}
     peerDependencies:
       '@better-auth-ui/core': '*'
       '@better-auth/api-key': '>=1.7.0'
@@ -7622,7 +7628,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
 
-  '@better-auth-ui/core@1.7.7(c96ab280705a929d3d18230d77dfff20)':
+  '@better-auth-ui/core@1.7.10(c96ab280705a929d3d18230d77dfff20)':
     dependencies:
       '@better-auth/agent-auth': 0.6.2(@better-auth/core@1.7.1(@better-auth/utils@0.5.0)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.4.3))(jose@6.2.9)(kysely@0.29.5)(nanostores@1.5.2))(better-auth@1.7.1(@opentelemetry/api@1.9.0)(@prisma/client@5.22.0(prisma@5.22.0))(@tanstack/react-start@1.168.48(crossws@0.4.12(srvx@0.11.22))(esbuild@0.28.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.5)(vite@8.2.2(@types/node@22.18.12)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.44.0)(tsx@4.23.12)(yaml@2.8.1)))(better-sqlite3@12.2.0)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@prisma/client@5.22.0(prisma@5.22.0))(@types/better-sqlite3@7.6.13)(@types/pg@8.23.1)(@vercel/postgres@0.10.0(utf-8-validate@6.0.4))(better-sqlite3@12.2.0)(gel@2.0.0)(kysely@0.29.5)(mysql2@3.11.3)(pg@8.23.0)(postgres@3.4.4)(prisma@5.22.0))(mysql2@3.11.3)(pg@8.23.0)(prisma@5.22.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(solid-js@1.9.9))
       '@mikkelscheike/email-provider-links': 5.2.2
@@ -7634,9 +7640,9 @@ snapshots:
       '@better-auth/api-key': 1.7.1(734121064cd472871d8579cc1db3e9d9)
       '@better-auth/passkey': 1.7.1(e5300f46892bc874774c9e15198b62c0)
 
-  '@better-auth-ui/react@1.7.7(c47173a871db04137b31b1eba4e99d02)':
+  '@better-auth-ui/react@1.7.10(f4b8d54694e78ed6a527fda05dd27763)':
     dependencies:
-      '@better-auth-ui/core': 1.7.7(c96ab280705a929d3d18230d77dfff20)
+      '@better-auth-ui/core': 1.7.10(c96ab280705a929d3d18230d77dfff20)
       '@better-auth/api-key': 1.7.1(734121064cd472871d8579cc1db3e9d9)
       '@better-auth/passkey': 1.7.1(e5300f46892bc874774c9e15198b62c0)
       '@tanstack/query-core': 5.101.4

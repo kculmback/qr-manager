@@ -12,6 +12,7 @@ export function buildAuth(db: Db) {
     productionUrl: env.BACKEND_URL,
     frontendUrl: env.FRONTEND_URL,
     secret: env.AUTH_SECRET,
+    allowRegistration: env.ALLOW_REGISTRATION,
     discordClientId: env.AUTH_DISCORD_ID,
     discordClientSecret: env.AUTH_DISCORD_SECRET,
   });

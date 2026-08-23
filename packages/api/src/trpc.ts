@@ -30,6 +30,8 @@ export const createTRPCContext = async (opts: {
   headers: Headers;
   auth: Auth;
   db: Db;
+  /** Deployment-wide registration switch, read from the backend's env. */
+  allowRegistration: boolean;
 }) => {
   const authApi = opts.auth.api;
   const session = await authApi.getSession({
@@ -40,6 +42,7 @@ export const createTRPCContext = async (opts: {
     session,
     db: opts.db,
     headers: opts.headers,
+    allowRegistration: opts.allowRegistration,
   };
 };
 /**

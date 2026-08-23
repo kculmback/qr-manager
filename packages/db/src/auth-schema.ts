@@ -8,6 +8,11 @@ export const user = pgTable("user", (t) => ({
   image: t.text(),
   createdAt: t.timestamp().notNull(),
   updatedAt: t.timestamp().notNull(),
+  // Added by the better-auth `admin` plugin.
+  role: t.text(),
+  banned: t.boolean(),
+  banReason: t.text(),
+  banExpires: t.timestamp(),
 }));
 
 export const session = pgTable("session", (t) => ({
@@ -22,12 +27,20 @@ export const session = pgTable("session", (t) => ({
     .text()
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  // Added by the better-auth `admin` plugin: the admin behind an
+  // impersonated session.
+  impersonatedBy: t.text(),
 }));
 
 export const account = pgTable("account", (t) => ({
   id: t.text().primaryKey(),
   accountId: t.text().notNull(),
   providerId: t.text().notNull(),
+  // better-auth 1.7 scopes account identity by issuer. Providers without an
+  // issuer of their own get a synthetic one: `local:credential` for
+  // email + password, `local:oauth:<provider>` for OAuth.
+  // @see https://better-auth.com/docs/guides/1-7-upgrade-guide#account-identity-is-scoped-by-issuer
+  issuer: t.text().notNull(),
   userId: t
     .text()
     .notNull()

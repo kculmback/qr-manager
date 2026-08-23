@@ -32,6 +32,14 @@ export const env = createEnv({
         ? z.string().min(1)
         : z.string().min(1).optional(),
 
+    /**
+     * Whether visitors may create their own account. Off by default: a
+     * self-hosted instance on a public URL should not accept strangers unless
+     * its operator says so. The first account is always allowed regardless,
+     * so the instance stays claimable.
+     */
+    ALLOW_REGISTRATION: z.stringbool().default(false),
+
     /** Optional Discord OAuth provider; the provider is only registered when both are set. */
     AUTH_DISCORD_ID: z.string().min(1).optional(),
     AUTH_DISCORD_SECRET: z.string().min(1).optional(),
