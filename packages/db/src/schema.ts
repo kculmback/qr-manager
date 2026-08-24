@@ -3,12 +3,13 @@ import { index, pgTable, primaryKey, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-import type { CodePayload } from "@qr-manager/validators";
+import type { CodePayload, CodeStyle } from "@qr-manager/validators";
 import {
   CATEGORY_NAME_MAX_LENGTH,
   CODE_MEDIUMS,
   CODE_MODES,
   CODE_TYPE_NAMES,
+  DEFAULT_CODE_STYLE,
   TAG_NAME_MAX_LENGTH,
 } from "@qr-manager/validators";
 
@@ -128,6 +129,26 @@ export const Code = pgTable(
      * are validated together by `codeContentSchema` on every write.
      */
     payload: t.jsonb().$type<CodePayload>().notNull(),
+
+    /**
+     * How the code is drawn: its two colours and the size of its logo.
+     *
+     * Presentation only -- nothing here reaches the value encoded into the
+     * grid. `not null` with a default so every read is a concrete style rather
+     * than something each render site has to fill in for itself. NFC tags have
+     * no artwork, so the column is simply inert on those rows.
+     */
+    style: t.jsonb().$type<CodeStyle>().notNull().default(DEFAULT_CODE_STYLE),
+
+    /**
+     * The logo drawn in the middle of the code, as a base64 data URI.
+     *
+     * Its own column rather than a key inside `style` because it is the one
+     * large value on the row. The list ships a page of codes at a time and its
+     * thumbnails are far too small to show a logo, so that query leaves this
+     * column unselected and sends a `hasLogo` flag in its place.
+     */
+    logo: t.text(),
 
     createdAt: t.timestamp().defaultNow().notNull(),
     updatedAt: t

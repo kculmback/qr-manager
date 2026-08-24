@@ -1,0 +1,2 @@
+ALTER TABLE "code" ADD COLUMN "style" jsonb DEFAULT '{"foreground":"#000000","background":"#ffffff","logoScale":0.2}'::jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "code" ADD COLUMN "logo" text;

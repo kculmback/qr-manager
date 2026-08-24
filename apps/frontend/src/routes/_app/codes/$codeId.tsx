@@ -18,6 +18,7 @@ import {
 } from "@qr-manager/ui/components/card";
 import { CODE_TYPES } from "@qr-manager/validators";
 
+import type { Appearance } from "~/components/codes/appearance-fields";
 import type { CodeFormValues } from "~/components/codes/code-form";
 import { CodeForm } from "~/components/codes/code-form";
 import { CodeTaxonomy } from "~/components/codes/code-taxonomy";
@@ -70,6 +71,15 @@ function CodeDetailPage() {
   const { data: code } = useSuspenseQuery(
     trpc.code.byId.queryOptions({ id: codeId }),
   );
+
+  // The preview follows the form rather than the saved row, so a colour or a
+  // logo can be judged where it will actually be printed -- full size, next to
+  // the download buttons -- before anything is committed. The route remounts on
+  // a different `codeId`, so this cannot go stale against another code.
+  const [appearance, setAppearance] = useState<Appearance>({
+    style: code.style,
+    logo: code.logo,
+  });
 
   // Saving or deleting can create a category or tag, and can leave the last
   // one unused -- in which case the server drops it. Either way the suggestion
@@ -150,8 +160,8 @@ function CodeDetailPage() {
         <CodeTaxonomy category={code.category} tags={code.tags} />
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <Card className="h-fit">
+      <div className="relative grid gap-6 lg:grid-cols-[320px_1fr]">
+        <Card className="sticky top-16 h-fit">
           <CardHeader>
             <CardTitle>QR code</CardTitle>
             <CardDescription className="text-pretty">
@@ -161,7 +171,12 @@ function CodeDetailPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <QrPreview value={code.encodedValue} name={code.name} />
+            <QrPreview
+              value={code.encodedValue}
+              name={code.name}
+              style={appearance.style}
+              logo={appearance.logo}
+            />
             {code.mode === "dynamic" && <ShortLink url={code.shortUrl} />}
           </CardContent>
         </Card>
@@ -177,6 +192,8 @@ function CodeDetailPage() {
                 mode: code.mode,
                 slug: code.slug,
                 content: code.content,
+                style: code.style,
+                logo: code.logo,
                 category: code.category?.name ?? null,
                 tags: code.tags.map((tag) => tag.name),
               }}
@@ -184,6 +201,7 @@ function CodeDetailPage() {
               isPending={isSaving}
               submitError={error}
               onSubmit={handleSubmit}
+              onAppearanceChange={setAppearance}
             />
           </CardContent>
         </Card>

@@ -3,15 +3,17 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
 import type { Transaction } from "@qr-manager/db/client";
-import { and, count, desc, eq } from "@qr-manager/db";
+import { and, count, desc, eq, getTableColumns, sql } from "@qr-manager/db";
 import { Category, Code } from "@qr-manager/db/schema";
 import {
   buildShortUrl,
   codeCategoryInputSchema,
   codeContentSchema,
   codeListInputSchema,
+  codeLogoSchema,
   codeMediumSchema,
   codeModeSchema,
+  codeStyleSchema,
   codeTagsInputSchema,
   encodeCodeValue,
   encodedByteLength,
@@ -47,6 +49,10 @@ const codeFieldsSchema = z
     name: z.string().trim().min(1, "Give the code a name.").max(120),
     mode: codeModeSchema,
     content: codeContentSchema,
+    /** Colours and logo size. Artwork only -- never the encoded value. */
+    style: codeStyleSchema,
+    /** Base64 data URI for the logo in the middle, or null for none. */
+    logo: codeLogoSchema.nullable().default(null),
     /** Category name, not id -- an unknown one is created. Null clears it. */
     category: codeCategoryInputSchema,
     /** Tag names, likewise. Anything left unused afterwards is cleaned up. */
@@ -91,15 +97,22 @@ const updateCodeSchema = z.intersection(
 
 type CodeRow = typeof Code.$inferSelect;
 
+/** The columns `toCodeView` reads. Generic so the list can leave `logo` out. */
+type EncodableRow = Pick<CodeRow, "type" | "payload" | "mode" | "slug">;
+
 /**
  * Adds the two derived values the client needs but must not compute itself:
  * the public short link, and the exact string encoded into the grid.
  *
  * Keeping `encodedValue` server-side means the QR preview is a pure function of
  * one string, and the frontend never has to re-implement a serializer.
+ *
+ * Generic in the row rather than taking a whole `CodeRow`, so the list can hand
+ * it a row with the logo column left unselected and still get its own extra
+ * columns back out.
  */
-function toCodeView(
-  code: CodeRow,
+function toCodeView<TRow extends EncodableRow>(
+  code: TRow,
   shortUrlBase: string,
   taxonomy: CodeTaxonomy = EMPTY_TAXONOMY,
 ) {
@@ -145,6 +158,22 @@ async function resolveTaxonomy(
  * uncategorised code reads as `category: null` rather than an object of nulls.
  */
 const categorySelection = { id: Category.id, name: Category.name };
+
+/**
+ * The code columns the list selects: everything except the logo.
+ *
+ * A logo is a base64 image on the row, and a page is 25 rows -- selecting it
+ * here would put megabytes on the wire to draw thumbnails far too small to show
+ * one. `hasLogo` is what the list actually needs: a thumbnail still has to know
+ * whether the real code was encoded at the higher error correction level a
+ * logo forces, or its module pattern would not match the code it stands for.
+ */
+const { logo: _logo, ...listCodeColumns } = getTableColumns(Code);
+
+const listCodeSelection = {
+  ...listCodeColumns,
+  hasLogo: sql<boolean>`${Code.logo} is not null`,
+};
 
 /** Slug candidates to try in order. A collision is pure chance, so draw again. */
 function* slugDraws(): Generator<string> {
@@ -205,7 +234,7 @@ export const codeRouter = {
       // make the LIMIT count join output instead of codes. One extra query for
       // the whole page instead.
       const rows = await ctx.db
-        .select({ code: Code, category: categorySelection })
+        .select({ code: listCodeSelection, category: categorySelection })
         .from(Code)
         .leftJoin(Category, eq(Category.id, Code.categoryId))
         .where(where)
@@ -277,6 +306,8 @@ export const codeRouter = {
           mode: input.mode,
           type: input.content.type,
           payload: input.content.payload,
+          style: input.style,
+          logo: input.logo,
           categoryId: taxonomy.category?.id ?? null,
         };
 
@@ -334,6 +365,8 @@ export const codeRouter = {
               mode: input.mode,
               type: input.content.type,
               payload: input.content.payload,
+              style: input.style,
+              logo: input.logo,
               categoryId: taxonomy.category?.id ?? null,
               ...(input.slug ? { slug: input.slug } : {}),
             })

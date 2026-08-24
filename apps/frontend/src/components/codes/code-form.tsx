@@ -1,6 +1,6 @@
 import type { SyntheticEvent } from "react";
 import type { z } from "zod/v4";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TriangleAlert } from "lucide-react";
 
 import type { CodeContent, CodeMode, CodeType } from "@qr-manager/validators";
@@ -28,19 +28,23 @@ import {
   CODE_TYPE_NAMES,
   CODE_TYPES,
   codeContentSchema,
+  codeStyleSchema,
+  DEFAULT_CODE_STYLE,
   encodedByteLength,
   encodePayload,
   MAX_ENCODED_BYTES,
   supportsDynamic,
 } from "@qr-manager/validators";
 
+import type { Appearance } from "./appearance-fields";
 import type { FieldErrorMap } from "~/lib/use-field-errors";
 import { useFieldErrors } from "~/lib/use-field-errors";
+import { AppearanceFields } from "./appearance-fields";
 import { CodeField, formString, optionalFormString } from "./code-field";
 import { PAYLOAD_FIELDSETS } from "./payload-fields";
 import { CategoryField, TagsField } from "./taxonomy-fields";
 
-export interface CodeFormValues {
+export interface CodeFormValues extends Appearance {
   name: string;
   mode: CodeMode;
   slug?: string;
@@ -53,7 +57,7 @@ export interface CodeFormValues {
 
 export interface CodeFormProps {
   /** Existing values when editing. */
-  initial?: {
+  initial?: Appearance & {
     name: string;
     mode: CodeMode;
     slug: string;
@@ -66,6 +70,12 @@ export interface CodeFormProps {
   /** Server-side failure, shown above the submit button. */
   submitError?: string | null;
   onSubmit: (values: CodeFormValues) => void;
+  /**
+   * Fires on every artwork change, so a page showing the real code alongside
+   * the form can repaint it before anything is saved. Colours are chosen by
+   * looking at the result, which a preview of the *saved* state cannot show.
+   */
+  onAppearanceChange?: (appearance: Appearance) => void;
 }
 
 /**
@@ -144,6 +154,7 @@ export function CodeForm({
   isPending,
   submitError,
   onSubmit,
+  onAppearanceChange,
 }: CodeFormProps) {
   const [type, setType] = useState<CodeType>(initial?.content.type ?? "url");
   const [isDynamic, setIsDynamic] = useState(
@@ -157,6 +168,17 @@ export function CodeForm({
     initial?.category ?? null,
   );
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  // Likewise: a colour comes from a picker and a logo from a file, neither of
+  // which survives a round trip through `FormData` as the value we store.
+  const [appearance, setAppearance] = useState<Appearance>({
+    style: initial?.style ?? DEFAULT_CODE_STYLE,
+    logo: initial?.logo ?? null,
+  });
+
+  useEffect(
+    () => onAppearanceChange?.(appearance),
+    [appearance, onAppearanceChange],
+  );
 
   const errors = useFieldErrors();
   const { replaceErrors } = errors;
@@ -192,6 +214,15 @@ export function CodeForm({
         return;
       }
 
+      // Colours are checked with the same schema the server uses, so the
+      // contrast rule has one definition rather than a copy that can drift.
+      const style = codeStyleSchema.safeParse(appearance.style);
+
+      if (!style.success) {
+        replaceErrors(toFieldErrors(style.error));
+        return;
+      }
+
       // Only a static code carries its payload in the grid, so only a static
       // code can overflow it. Checked here as well as on the server so the
       // message lands next to the field rather than as a failed request.
@@ -211,11 +242,22 @@ export function CodeForm({
         mode,
         slug: optionalFormString(data, "slug"),
         content: parsed.data,
+        style: style.data,
+        logo: appearance.logo,
         category,
         tags,
       });
     },
-    [type, mode, category, tags, fromFormData, onSubmit, replaceErrors],
+    [
+      type,
+      mode,
+      category,
+      tags,
+      appearance,
+      fromFormData,
+      onSubmit,
+      replaceErrors,
+    ],
   );
 
   return (
@@ -305,6 +347,17 @@ export function CodeForm({
             )}
           </>
         )}
+
+        <FieldSeparator />
+
+        {/* Artwork, not content: these change how the code looks without
+            touching the value encoded into it. */}
+        <AppearanceFields
+          value={appearance}
+          onChange={setAppearance}
+          disabled={isPending}
+          errors={errors}
+        />
 
         <FieldSeparator />
 

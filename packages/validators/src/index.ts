@@ -11,3 +11,4 @@ export * from "./codes/sms";
 export * from "./codes/geo";
 export * from "./codes/taxonomy";
 export * from "./codes/list";
+export * from "./codes/style";

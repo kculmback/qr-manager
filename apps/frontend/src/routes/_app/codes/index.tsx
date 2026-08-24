@@ -36,6 +36,7 @@ import {
 import { CodeFilters } from "~/components/codes/code-filters";
 import { CodeTaxonomy } from "~/components/codes/code-taxonomy";
 import { CodesPagination } from "~/components/codes/codes-pagination";
+import { qrArtProps } from "~/components/codes/qr-art";
 import { useTRPC } from "~/lib/trpc";
 
 /**
@@ -221,14 +222,26 @@ function CodesPage() {
               <ItemMedia>
                 {/* The bare SVG rather than `QrPreview`: the preview also
                     mounts an offscreen 1024px export canvas, which is wasted
-                    work once per row. */}
-                <div className="rounded-xl bg-white p-1.5">
+                    work once per row.
+
+                    No logo either -- the list leaves those bytes on the server,
+                    and 56px is too small to show one. `hasLogo` still comes
+                    along so the thumbnail is encoded the way the real code is
+                    and the module pattern matches. */}
+                <div
+                  className="rounded-xl p-1.5"
+                  style={{ backgroundColor: code.style.background }}
+                >
                   <QRCodeSVG
                     value={code.encodedValue}
                     size={56}
-                    marginSize={2}
-                    level="M"
                     title={`QR code for ${code.name}`}
+                    {...qrArtProps({
+                      style: code.style,
+                      hasLogo: code.hasLogo,
+                      size: 56,
+                    })}
+                    marginSize={2}
                   />
                 </div>
               </ItemMedia>

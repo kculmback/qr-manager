@@ -1,18 +1,15 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Download } from "lucide-react";
 import { QRCodeCanvas, QRCodeSVG } from "qrcode.react";
 
 import { Button } from "@qr-manager/ui/components/button";
 import { cn } from "@qr-manager/ui/lib/utils";
 
+import type { QrArt } from "./qr-art";
+import { qrArtProps } from "./qr-art";
+
 /** Pixel size of the PNG export -- large enough to print without artefacts. */
 const PNG_EXPORT_SIZE = 1024;
-
-/**
- * Four modules of quiet zone, as the QR specification requires. Scanners are
- * markedly less reliable without it, and `qrcode.react` defaults to none.
- */
-const MARGIN_MODULES = 4;
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -31,7 +28,44 @@ function toFilename(name: string) {
   return slug || "qr-code";
 }
 
-export interface QrPreviewProps {
+/**
+ * Whether a logo has been decoded, so the export canvas can be trusted.
+ *
+ * `qrcode.react` draws the logo onto the canvas only once its own `<img>` has
+ * loaded, and `toBlob` reads whatever is there at the time. Without this gate a
+ * quick click on Download PNG saves a code with a hole where the logo should
+ * be -- silently, and only sometimes, which is the worst kind of wrong.
+ */
+function useLogoLoaded(logo: string | null | undefined): boolean {
+  // Which logo has decoded, rather than a boolean: swapping the logo has to
+  // reset the gate, and holding the src is what does that without the effect
+  // writing state on its way in.
+  const [decoded, setDecoded] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!logo) return;
+
+    let cancelled = false;
+    const image = new Image();
+    const settle = () => {
+      // A logo that will not decode is not worth blocking the export over --
+      // the code itself is still correct without it.
+      if (!cancelled) setDecoded(logo);
+    };
+
+    image.onload = settle;
+    image.onerror = settle;
+    image.src = logo;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [logo]);
+
+  return !logo || decoded === logo;
+}
+
+export interface QrPreviewProps extends QrArt {
   /** The exact string encoded into the grid, as computed by the API. */
   value: string;
   /** Used for the download filename and the accessible title. */
@@ -43,16 +77,21 @@ export interface QrPreviewProps {
 export function QrPreview({
   value,
   name,
+  style,
+  logo,
   size = 256,
   className,
 }: QrPreviewProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const logoLoaded = useLogoLoaded(logo);
 
   const downloadSvg = useCallback(() => {
     const svg = svgRef.current;
     if (!svg) return;
 
+    // Self-contained even with a logo: the image is an inline data URI, so the
+    // file a print shop opens has nothing to fetch.
     downloadBlob(
       new Blob([new XMLSerializer().serializeToString(svg)], {
         type: "image/svg+xml",
@@ -71,16 +110,19 @@ export function QrPreview({
 
   return (
     <div className={cn("flex flex-col items-center gap-4", className)}>
-      <div className="rounded-3xl bg-white p-4">
+      {/* The code's own background, not white: the quiet zone is part of the
+          artwork, and a white frame around a coloured one is not what gets
+          printed. */}
+      <div
+        className="rounded-3xl p-4"
+        style={{ backgroundColor: style.background }}
+      >
         <QRCodeSVG
           ref={svgRef}
           value={value}
           size={size}
-          marginSize={MARGIN_MODULES}
-          // `M` corrects ~15% damage, which is the usual print/scan trade-off.
-          // `H` only becomes necessary once a logo is excavating modules.
-          level="M"
           title={`QR code for ${name}`}
+          {...qrArtProps({ style, logo, size })}
         />
       </div>
 
@@ -89,7 +131,12 @@ export function QrPreview({
           <Download />
           SVG
         </Button>
-        <Button variant="outline" size="sm" onClick={downloadPng}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={downloadPng}
+          disabled={!logoLoaded}
+        >
           <Download />
           PNG
         </Button>
@@ -102,9 +149,8 @@ export function QrPreview({
         ref={canvasRef}
         value={value}
         size={PNG_EXPORT_SIZE}
-        marginSize={MARGIN_MODULES}
-        level="M"
         className="hidden"
+        {...qrArtProps({ style, logo, size: PNG_EXPORT_SIZE })}
       />
     </div>
   );
