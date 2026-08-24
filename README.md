@@ -76,6 +76,12 @@ cp .env.example .env        # set AUTH_SECRET; adjust PUBLIC_URL for your domain
 pnpm docker:up              # docker compose up -d --build
 ```
 
+`PUBLIC_URL` must be the origin the **browser** loads the app from, which is
+not always the one Docker publishes. Behind a tunnel (cloudflared, ngrok,
+Tailscale Funnel) it is the tunnel's public hostname. Leave it on `localhost`
+while serving a tunnel URL and better-auth rejects every sign-in as an
+untrusted origin.
+
 The whole app is then served from **one origin**, <http://localhost:8080> by
 default. Only the proxy publishes a port; the app containers and the database
 stay on the internal Docker network.
@@ -118,8 +124,14 @@ was loaded from. This matters more than it looks:
   keeps working as browsers continue restricting cross-site cookies.
 
 For a split deployment — frontend and backend on different domains — set
-`VITE_BACKEND_URL` at build time and the frontend uses that absolute URL
-instead. The backend already allows credentialed CORS from `FRONTEND_URL`.
+`PUBLIC_BACKEND_URL` in `.env` (Compose passes it as the frontend's
+`VITE_BACKEND_URL` build arg) and the frontend uses that absolute URL instead.
+The backend already allows credentialed CORS from `FRONTEND_URL`.
+
+`VITE_BACKEND_URL` itself is deliberately not read by Compose. It belongs to
+local development, where `.env` points it at `http://localhost:3000`; Compose
+reads the same `.env`, so honouring the name there would bake a localhost URL
+into every deployed image.
 
 ## Environment variables
 
@@ -148,7 +160,7 @@ rather than at the first request.
 | Variable           | Required    | Description                                                                                   |
 | ------------------ | ----------- | --------------------------------------------------------------------------------------------- |
 | `BACKEND_URL`      | yes         | Where SSR reaches the backend; may be internal (`http://backend:3000`)                        |
-| `VITE_BACKEND_URL` | no          | Absolute backend URL baked into the browser bundle at build time. Leave unset for same-origin |
+| `VITE_BACKEND_URL` | no          | Absolute backend URL baked into the browser bundle at build time. Leave unset for same-origin. Under Compose this is a build arg fed from `PUBLIC_BACKEND_URL`, not from `VITE_BACKEND_URL` itself |
 | `FRONTEND_PORT`    | no (`3001`) | Dev server port. Set this rather than `PORT`, which the backend uses                          |
 
 ## Database and migrations

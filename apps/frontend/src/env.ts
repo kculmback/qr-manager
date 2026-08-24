@@ -33,6 +33,14 @@ export const env = createEnv({
    * Destructure all variables from `process.env` to make sure they aren't tree-shaken away.
    */
   runtimeEnv: typeof window !== "undefined" ? import.meta.env : process.env,
+  /**
+   * The Docker build always *defines* `VITE_BACKEND_URL` -- the Dockerfile has
+   * `ARG VITE_BACKEND_URL=""` -- and Vite copies prefixed variables into
+   * `import.meta.env` verbatim, empty ones included. Without this, the
+   * same-origin default (an empty build arg) reaches `z.url()` as `""` and
+   * throws in the browser instead of resolving to `undefined`.
+   */
+  emptyStringAsUndefined: true,
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });

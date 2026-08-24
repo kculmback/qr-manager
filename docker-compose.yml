@@ -81,9 +81,16 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile
       args:
-        # Empty on purpose: the browser calls the backend on its own origin
-        # through the proxy. Set it only for a split-domain deployment.
-        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-}
+        # Deliberately NOT `${VITE_BACKEND_URL}`: that name belongs to local
+        # development, where the two apps are on different ports and `.env`
+        # sets it to `http://localhost:3000`. Compose reads the same `.env`, so
+        # reusing the name would bake a localhost URL into the browser bundle
+        # and every request from a real deployment would fail to connect.
+        #
+        # Empty on purpose here: the browser calls the backend on its own
+        # origin through the proxy. Set `PUBLIC_BACKEND_URL` only for a
+        # deliberate split-domain deployment.
+        VITE_BACKEND_URL: ${PUBLIC_BACKEND_URL:-}
     restart: unless-stopped
     environment:
       # Server-side rendering talks to the backend directly over the internal
