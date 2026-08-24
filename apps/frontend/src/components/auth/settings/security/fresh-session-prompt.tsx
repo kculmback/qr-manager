@@ -30,7 +30,7 @@ export function FreshSessionPrompt({ onFresh }: FreshSessionPromptProps) {
     onError: () => setPassword(""),
     onSuccess: async (data) => {
       if (isTwoFactorRedirect(data)) {
-        continueSignIn(data);
+        await continueSignIn(data);
         return;
       }
       setPassword("");
