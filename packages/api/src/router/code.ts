@@ -192,9 +192,28 @@ function isUniqueViolation(error: unknown): boolean {
   );
 }
 
+const SLUG_TAKEN_MESSAGE = "That short link is already taken.";
+
+/**
+ * A conflict the user can fix, reported against the field that caused it.
+ *
+ * The `ZodError` cause is not decoration: `trpc.ts`'s error formatter turns any
+ * such cause into `data.zodError`, which is the one channel the client reads
+ * field-scoped messages from. Without it this arrives as a bare string with no
+ * indication of what it is about, and the form has nowhere to put it but its
+ * footer -- several fields away from the short link it is talking about.
+ */
 const SLUG_TAKEN = new TRPCError({
   code: "CONFLICT",
-  message: "That short link is already taken.",
+  message: SLUG_TAKEN_MESSAGE,
+  cause: new z.ZodError([
+    {
+      code: "custom",
+      path: ["slug"],
+      message: SLUG_TAKEN_MESSAGE,
+      input: undefined,
+    },
+  ]),
 });
 
 export const codeRouter = {
@@ -286,6 +305,36 @@ export const codeRouter = {
         category: row.category,
         tags: tagsByCode.get(row.code.id) ?? [],
       });
+    }),
+
+  /**
+   * Whether a vanity short link is free, so the form can say so before saving.
+   *
+   * Deliberately *not* scoped to the caller: `/r/:slug` resolves by slug alone,
+   * with no account in the request, so one namespace is shared by everyone on
+   * the deployment. A slug another account holds is unavailable here too.
+   *
+   * The answer is a bare boolean -- never who holds it -- but it does let a
+   * signed-in user probe which slugs exist. That is inherent to a shared
+   * namespace rather than something this endpoint introduces, since claiming
+   * one already tells them the same thing; it is why this is `protectedProcedure`.
+   *
+   * Advisory only. The row it looks for can be written a millisecond later, so
+   * the unique index on `Code.slug` stays the thing that actually decides.
+   */
+  slugAvailable: protectedProcedure
+    .input(z.object({ slug: slugSchema }))
+    .query(async ({ ctx, input }) => {
+      const [existing] = await ctx.db
+        .select({ id: Code.id })
+        .from(Code)
+        .where(eq(Code.slug, input.slug))
+        .limit(1);
+
+      // The normalized slug comes back with the answer so the caller can tell
+      // whether the result it is holding describes what is in the field now or
+      // something the user has since typed past.
+      return { slug: input.slug, available: !existing };
     }),
 
   create: protectedProcedure

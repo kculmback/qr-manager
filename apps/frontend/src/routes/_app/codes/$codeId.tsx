@@ -20,10 +20,12 @@ import { CODE_TYPES } from "@qr-manager/validators";
 
 import type { Appearance } from "~/components/codes/appearance-fields";
 import type { CodeFormValues } from "~/components/codes/code-form";
+import type { SubmitError } from "~/lib/server-errors";
 import { CodeForm } from "~/components/codes/code-form";
 import { CodeTaxonomy } from "~/components/codes/code-taxonomy";
 import { DeleteCodeDialog } from "~/components/codes/delete-code-dialog";
 import { QrPreview } from "~/components/codes/qr-preview";
+import { toSubmitError } from "~/lib/server-errors";
 import { useTRPC } from "~/lib/trpc";
 
 export const Route = createFileRoute("/_app/codes/$codeId")({
@@ -66,7 +68,7 @@ function CodeDetailPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const navigate = Route.useNavigate();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SubmitError | null>(null);
 
   const { data: code } = useSuspenseQuery(
     trpc.code.byId.queryOptions({ id: codeId }),
@@ -96,7 +98,7 @@ function CodeDetailPage() {
   const { mutate: updateCode, isPending: isSaving } = useMutation(
     trpc.code.update.mutationOptions({
       onSuccess: invalidate,
-      onError: (mutationError) => setError(mutationError.message),
+      onError: (mutationError) => setError(toSubmitError(mutationError)),
     }),
   );
 
@@ -106,7 +108,7 @@ function CodeDetailPage() {
         await invalidate();
         await navigate({ to: "/codes" });
       },
-      onError: (mutationError) => setError(mutationError.message),
+      onError: (mutationError) => setError(toSubmitError(mutationError)),
     }),
   );
 

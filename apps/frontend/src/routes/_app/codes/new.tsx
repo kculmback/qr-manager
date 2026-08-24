@@ -7,7 +7,9 @@ import { Button } from "@qr-manager/ui/components/button";
 import { Card, CardContent } from "@qr-manager/ui/components/card";
 
 import type { CodeFormValues } from "~/components/codes/code-form";
+import type { SubmitError } from "~/lib/server-errors";
 import { CodeForm } from "~/components/codes/code-form";
+import { toSubmitError } from "~/lib/server-errors";
 import { useTRPC } from "~/lib/trpc";
 
 export const Route = createFileRoute("/_app/codes/new")({
@@ -18,7 +20,7 @@ function NewCodePage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const navigate = Route.useNavigate();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<SubmitError | null>(null);
 
   const { mutate: createCode, isPending } = useMutation(
     trpc.code.create.mutationOptions({
@@ -30,7 +32,7 @@ function NewCodePage() {
         ]);
         await navigate({ to: "/codes/$codeId", params: { codeId: code.id } });
       },
-      onError: (mutationError) => setError(mutationError.message),
+      onError: (mutationError) => setError(toSubmitError(mutationError)),
     }),
   );
 

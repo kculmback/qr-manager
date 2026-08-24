@@ -65,8 +65,8 @@ export const slugSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .min(SLUG_MIN_LENGTH)
-  .max(SLUG_MAX_LENGTH)
+  .min(SLUG_MIN_LENGTH, `Use at least ${SLUG_MIN_LENGTH} characters.`)
+  .max(SLUG_MAX_LENGTH, `Use at most ${SLUG_MAX_LENGTH} characters.`)
   .regex(
     /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/,
     "Use lowercase letters, numbers and hyphens, starting and ending with a letter or number.",

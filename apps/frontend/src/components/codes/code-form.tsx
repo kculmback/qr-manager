@@ -37,11 +37,13 @@ import {
 } from "@qr-manager/validators";
 
 import type { Appearance } from "./appearance-fields";
+import type { SubmitError } from "~/lib/server-errors";
 import type { FieldErrorMap } from "~/lib/use-field-errors";
 import { useFieldErrors } from "~/lib/use-field-errors";
 import { AppearanceFields } from "./appearance-fields";
 import { CodeField, formString, optionalFormString } from "./code-field";
 import { PAYLOAD_FIELDSETS } from "./payload-fields";
+import { blocksSubmit, SlugField, useSlugAvailability } from "./slug-field";
 import { CategoryField, TagsField } from "./taxonomy-fields";
 
 export interface CodeFormValues extends Appearance {
@@ -67,8 +69,12 @@ export interface CodeFormProps {
   };
   submitLabel: string;
   isPending: boolean;
-  /** Server-side failure, shown above the submit button. */
-  submitError?: string | null;
+  /**
+   * A failed save, already sorted into per-field messages and a leftover one.
+   * Anything naming a field lands on that field; the rest shows above the
+   * submit button.
+   */
+  submitError?: SubmitError | null;
   onSubmit: (values: CodeFormValues) => void;
   /**
    * Fires on every artwork change, so a page showing the real code alongside
@@ -168,6 +174,9 @@ export function CodeForm({
     initial?.category ?? null,
   );
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  // Held in state rather than read off the form only at submit, because the
+  // availability check needs it as it is typed.
+  const [slug, setSlug] = useState(initial?.slug ?? "");
   // Likewise: a colour comes from a picker and a logo from a file, neither of
   // which survives a round trip through `FormData` as the value we store.
   const [appearance, setAppearance] = useState<Appearance>({
@@ -181,12 +190,28 @@ export function CodeForm({
   );
 
   const errors = useFieldErrors();
-  const { replaceErrors } = errors;
+  const { mergeErrors, replaceErrors } = errors;
 
   const definition = CODE_TYPES[type];
   const canBeDynamic = supportsDynamic(type);
   const mode: CodeMode = canBeDynamic && isDynamic ? "dynamic" : "static";
   const { Fields, fromFormData } = PAYLOAD_FIELDSETS[type];
+
+  const slugCheck = useSlugAvailability({
+    slug,
+    enabled: mode === "dynamic",
+    current: initial?.slug,
+  });
+
+  // Known-bad before the request: the field says why, so the button can be
+  // shut rather than letting the user fire off a save that cannot land.
+  const slugBlocked = blocksSubmit(slugCheck);
+
+  // Merged rather than replaced: the user may have typed since the save failed,
+  // and clearing what they are looking at now would be its own surprise.
+  useEffect(() => {
+    if (submitError) mergeErrors(submitError.fields);
+  }, [submitError, mergeErrors]);
 
   const changeType = useCallback(
     (next: CodeType) => {
@@ -202,6 +227,16 @@ export function CodeForm({
   const handleSubmit = useCallback(
     (event: SyntheticEvent<HTMLFormElement>) => {
       event.preventDefault();
+
+      // Checked first because it is the one failure the user has already been
+      // shown -- submitting anyway would only replace a message they can read
+      // with the same message from the server a second later.
+      if (slugBlocked) {
+        replaceErrors({
+          slug: slugCheck.error ?? "That short link cannot be used.",
+        });
+        return;
+      }
 
       const data = new FormData(event.currentTarget);
       const parsed = codeContentSchema.safeParse({
@@ -254,6 +289,8 @@ export function CodeForm({
       category,
       tags,
       appearance,
+      slugBlocked,
+      slugCheck.error,
       fromFormData,
       onSubmit,
       replaceErrors,
@@ -331,18 +368,13 @@ export function CodeForm({
             </FieldDescription>
 
             {isDynamic && (
-              <CodeField
+              <SlugField
                 errors={errors}
-                name="slug"
-                label="Custom short link"
-                defaultValue={initial?.slug}
+                value={slug}
+                onChange={setSlug}
+                check={slugCheck}
                 disabled={isPending}
-                placeholder="lobby-poster"
-                description={
-                  initial
-                    ? "Changing this breaks every copy of this code already printed."
-                    : "Optional. Leave empty for a short random one."
-                }
+                editing={!!initial}
               />
             )}
           </>
@@ -379,12 +411,12 @@ export function CodeForm({
 
         {initial && <EditWarning from={initial.mode} to={mode} />}
 
-        {(submitError ?? errors.errors.form) && (
-          <FieldError>{submitError ?? errors.errors.form}</FieldError>
+        {(submitError?.message ?? errors.errors.form) && (
+          <FieldError>{submitError?.message ?? errors.errors.form}</FieldError>
         )}
 
         <Field orientation="horizontal">
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending || slugBlocked}>
             {isPending && <Spinner />}
             {submitLabel}
           </Button>

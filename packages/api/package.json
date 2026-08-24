@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@better-auth/core": "catalog:",
     "@qr-manager/auth": "workspace:*",
     "@qr-manager/db": "workspace:*",
     "@qr-manager/validators": "workspace:*",

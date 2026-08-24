@@ -14,6 +14,8 @@ export interface FieldErrors {
   setError: (name: string, message: string) => void;
   clearError: (name: string) => void;
   replaceErrors: (next: FieldErrorMap) => void;
+  /** Adds messages without disturbing the ones already showing. */
+  mergeErrors: (next: FieldErrorMap) => void;
   reset: () => void;
   /** Wiring every control needs: identity, validity state, and error lifecycle. */
   fieldProps: (name: string) => {
@@ -48,6 +50,10 @@ export function useFieldErrors(): FieldErrors {
     );
   }, []);
 
+  const mergeErrors = useCallback((next: FieldErrorMap) => {
+    setErrors((previous) => ({ ...previous, ...next }));
+  }, []);
+
   const reset = useCallback(() => setErrors({}), []);
 
   const fieldProps = useCallback(
@@ -71,9 +77,10 @@ export function useFieldErrors(): FieldErrors {
       setError,
       clearError,
       replaceErrors: setErrors,
+      mergeErrors,
       reset,
       fieldProps,
     }),
-    [errors, setError, clearError, reset, fieldProps],
+    [errors, setError, clearError, mergeErrors, reset, fieldProps],
   );
 }

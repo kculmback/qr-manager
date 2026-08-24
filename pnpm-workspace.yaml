@@ -4,6 +4,7 @@ packages:
   - tooling/*
 
 catalog:
+  "@better-auth/core": 1.7.1
   "@better-auth/passkey": 1.7.1
   "@eslint/js": ^9.38.0
   "@simplewebauthn/server": ^13.3.2
