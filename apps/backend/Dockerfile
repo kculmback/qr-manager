@@ -25,7 +25,6 @@ COPY packages/validators/package.json packages/validators/
 COPY tooling/eslint/package.json tooling/eslint/
 COPY tooling/github/package.json tooling/github/
 COPY tooling/prettier/package.json tooling/prettier/
-COPY tooling/tailwind/package.json tooling/tailwind/
 COPY tooling/typescript/package.json tooling/typescript/
 # `--ignore-scripts` skips the root `postinstall` (a network `pnpm dlx`) and any
 # dependency install hooks; the native deps in use ship prebuilt binaries.
@@ -38,8 +37,9 @@ COPY . .
 RUN pnpm --filter @qr-manager/backend build
 
 # --- runtime ----------------------------------------------------------------
-# tsdown bundles the workspace packages and dependencies into dist/, so the
-# final image needs neither node_modules nor the TypeScript sources.
+# tsdown bundles the workspace packages and every dependency into dist/ (see
+# `deps.alwaysBundle` in tsdown.config.ts), so the final image needs neither
+# node_modules nor the TypeScript sources.
 FROM base AS runtime
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0

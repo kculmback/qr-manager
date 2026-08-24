@@ -71,12 +71,12 @@
     "POSTGRES_URL",
     "AUTH_DISCORD_ID",
     "AUTH_DISCORD_SECRET",
-    "AUTH_REDIRECT_PROXY_URL",
     "AUTH_SECRET",
     "BACKEND_URL",
     "FRONTEND_URL",
     "FRONTEND_PORT",
     "HOST",
+    "MIGRATIONS_DIR",
     "PORT",
     "SHORT_URL_BASE",
     "VITE_BACKEND_URL"
@@ -84,9 +84,6 @@
   "globalPassThroughEnv": [
     "NODE_ENV",
     "CI",
-    "VERCEL",
-    "VERCEL_ENV",
-    "VERCEL_URL",
     "npm_lifecycle_event"
   ]
 }

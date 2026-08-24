@@ -4,10 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./middleware": "./src/middleware.ts",
-    "./client": "./src/client.ts",
-    "./registration": "./src/registration.ts",
-    "./env": "./env.ts"
+    "./registration": "./src/registration.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -21,9 +18,7 @@
     "@better-auth/drizzle-adapter": "^1.7.1",
     "@better-auth/passkey": "catalog:",
     "@qr-manager/db": "workspace:*",
-    "@t3-oss/env-core": "catalog:",
-    "better-auth": "catalog:",
-    "zod": "catalog:"
+    "better-auth": "catalog:"
   },
   "devDependencies": {
     "@qr-manager/eslint-config": "workspace:*",

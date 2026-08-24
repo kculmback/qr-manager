@@ -25,6 +25,21 @@ export default defineConfig(({ command }) => {
     resolve: {
       tsconfigPaths: true,
     },
+    // Bundle every dependency into the SSR build instead of leaving bare
+    // imports for node to resolve at runtime. The runtime image copies
+    // `.output` alone, with no `node_modules`, so an externalized dependency
+    // is a 500 on every page -- and only on the SSR path, so the container
+    // still starts and looks healthy.
+    //
+    // Build only. In dev the SSR module runner evaluates every inlined module
+    // as ESM, and `noExternal: true` opts out of the CJS detection that would
+    // otherwise hand those files to node's loader -- so `react/index.js` dies
+    // on `module is not defined` before the first render. Rollup's commonjs
+    // plugin converts the same files fine at build time.
+    ssr: {
+      // `false` is not a valid value here -- rolldown takes `true` or a list.
+      noExternal: command === "build" ? true : [],
+    },
     plugins: [nitro(), tanstackStart(), viteReact(), tailwindcss()],
   };
 });

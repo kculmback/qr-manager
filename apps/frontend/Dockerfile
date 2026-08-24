@@ -38,7 +38,9 @@ COPY . .
 RUN pnpm --filter @qr-manager/frontend build
 
 # --- runtime ----------------------------------------------------------------
-# Nitro emits a self-contained server bundle: no node_modules needed.
+# Nitro emits a self-contained server bundle: no node_modules needed. That
+# holds only because `ssr.noExternal` in vite.config.ts inlines the
+# dependencies -- without it the server starts and 500s on every page.
 FROM base AS runtime
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0

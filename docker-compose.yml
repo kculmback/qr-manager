@@ -41,6 +41,11 @@ services:
   # Applies pending SQL migrations, then exits. The backend waits for it to
   # finish successfully, so the schema is always current before traffic starts.
   migrate:
+    # Same image as the backend, named explicitly rather than left to Compose's
+    # per-service default: the two are built from one Dockerfile, and a shared
+    # tag keeps `docker compose build backend` from leaving a stale migrator
+    # behind, applying yesterday's migrations to today's code.
+    image: qr-manager-backend
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
@@ -55,6 +60,7 @@ services:
         condition: service_healthy
 
   backend:
+    image: qr-manager-backend
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
@@ -84,6 +90,22 @@ services:
       # network, skipping a round trip back out through the proxy.
       BACKEND_URL: http://backend:3000
       NODE_ENV: production
+    # Renders a page rather than pinging a static endpoint: a frontend whose
+    # server bundle is missing a dependency still listens and still serves
+    # assets, and only fails once something asks it to render. Anything under
+    # 500 counts -- the redirect to /setup or /login is a healthy answer.
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:'+(process.env.PORT||3001)+'/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
     depends_on:
       - backend
 

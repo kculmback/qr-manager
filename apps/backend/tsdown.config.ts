@@ -11,9 +11,12 @@ export default defineConfig({
   // so the container command stays `node dist/index.js`.
   outExtensions: () => ({ js: ".js" }),
   deps: {
-    // The workspace packages ship raw TypeScript with extensionless relative
-    // imports, so they have to be bundled in rather than left as externals.
-    alwaysBundle: [/^@qr-manager\//],
+    // Bundle everything, including this package's own `dependencies`, which
+    // tsdown externalizes by default. The runtime image copies `dist/` alone
+    // with no `node_modules`, so an external import is a crash at startup --
+    // and the workspace packages ship raw TypeScript with extensionless
+    // relative imports, which cannot be resolved at runtime either way.
+    alwaysBundle: [/.*/],
   },
   // Types are covered by `typecheck`; the build only needs runnable JS.
   dts: false,
